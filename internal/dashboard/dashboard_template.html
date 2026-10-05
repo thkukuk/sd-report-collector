@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>systemd-report dashboard</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page:           #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:           #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-1: #2a78d6; /* blue */
+    --series-2: #eb6834; /* orange */
+    --series-3: #1baf7a; /* aqua */
+    --series-4: #eda100; /* yellow */
+    --series-5: #e87ba4; /* magenta */
+    --series-6: #008300; /* green */
+    --series-7: #4a3aa7; /* violet */
+    --series-8: #e34948; /* red */
+    --good:     #0ca30c;
+    --warning:  #fab219;
+    --serious:  #ec835a;
+    --critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page:           #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:           #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+      --series-4: #c98500;
+      --series-5: #d55181;
+      --series-6: #008300;
+      --series-7: #9085e9;
+      --series-8: #e66767;
+      --good:     #0ca30c;
+      --warning:  #fab219;
+      --serious:  #ec835a;
+      --critical: #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page:           #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --grid:           #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+    --good:     #0ca30c;
+    --warning:  #fab219;
+    --serious:  #ec835a;
+    --critical: #e66767;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page);
+    color: var(--text-primary);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  a { color: var(--series-1); }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 20px 20px 60px; }
+
+  .topbar {
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+    gap: 12px 24px;
+    padding: 18px 20px;
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  .topbar .sub { color: var(--text-secondary); font-size: 13px; }
+  .topbar .right { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--text-secondary); }
+  .theme-toggle {
+    border: 1px solid var(--border); background: var(--page); color: var(--text-primary);
+    border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;
+  }
+
+  h2.section-title {
+    font-size: 13px; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--text-muted); margin: 32px 0 10px;
+  }
+
+  .banner {
+    margin-top: 16px; padding: 10px 14px; border-radius: 8px;
+    border: 1px solid var(--critical); background: color-mix(in srgb, var(--critical) 12%, var(--surface-1));
+    color: var(--text-primary); font-size: 13px; display: flex; gap: 8px; align-items: center;
+  }
+  .banner.ok {
+    border-color: var(--good); background: color-mix(in srgb, var(--good) 10%, var(--surface-1));
+  }
+  .banner a { font-weight: 600; }
+
+  .cards-grid {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  }
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .card h3 {
+    margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .03em;
+    color: var(--text-muted); font-weight: 600;
+  }
+  .kv { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: 13px; }
+  .kv .k { color: var(--text-secondary); }
+  .kv .v { font-weight: 500; text-align: right; }
+  .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  .meter-row { margin: 10px 0; }
+  .meter-row .label-row { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 4px; }
+  .meter-row .label-row .name { color: var(--text-secondary); }
+  .meter-row .label-row .stat { font-weight: 600; }
+  .meter-track { height: 10px; border-radius: 5px; background: var(--grid); overflow: hidden; }
+  .meter-fill { height: 100%; border-radius: 5px; }
+  .meter-sub { margin-top: 3px; font-size: 11.5px; color: var(--text-muted); }
+
+  .stacked-bar { display: flex; height: 16px; border-radius: 5px; overflow: hidden; background: var(--grid); }
+  .stacked-seg { height: 100%; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 10px; font-size: 12px; }
+  .legend .item { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+  .legend .swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+
+  .bars-list .bar-row { margin: 8px 0; }
+  .bars-list .bar-row .label-row { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+  .bars-list .bar-track { height: 8px; border-radius: 4px; background: var(--grid); }
+  .bars-list .bar-fill { height: 100%; border-radius: 4px; background: var(--series-1); }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px 4px 8px;
+    font-size: 12.5px; background: var(--page);
+  }
+  .chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .chip b { font-variant-numeric: tabular-nums; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  thead th {
+    text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em;
+    color: var(--text-muted); border-bottom: 1px solid var(--border); padding: 8px 10px;
+    cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  thead th:hover { color: var(--text-primary); }
+  thead th.sorted { color: var(--text-primary); }
+  tbody td { padding: 6px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  tbody tr:hover { background: var(--page); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .unit-name { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+
+  .badge {
+    display: inline-block; border-radius: 4px; padding: 1px 7px; font-size: 11.5px; font-weight: 600;
+    color: #fff;
+  }
+  .badge.muted { background: var(--text-muted); color: #fff; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .controls input[type="text"] {
+    padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface-1); color: var(--text-primary); font-size: 13px; min-width: 220px;
+  }
+  .controls select {
+    padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface-1); color: var(--text-primary); font-size: 13px;
+  }
+  .controls label { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+  .controls .count { margin-left: auto; font-size: 12.5px; color: var(--text-muted); }
+
+  .table-wrap { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; overflow: auto; max-height: 640px; }
+  thead { position: sticky; top: 0; background: var(--surface-1); z-index: 1; }
+
+  footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 12px; }
+  footer code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div>
+    <h1 id="hdr-host">—</h1>
+    <div class="sub" id="hdr-os">—</div>
+  </div>
+  <div class="right">
+    <span id="hdr-state"></span>
+    <span id="hdr-uptime"></span>
+    <span id="hdr-time"></span>
+    <button class="theme-toggle" id="theme-toggle" type="button">Theme</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="problem-banner"></div>
+
+  <h2 class="section-title">System</h2>
+  <div class="cards-grid" id="identity-cards"></div>
+
+  <h2 class="section-title">Resources</h2>
+  <div class="cards-grid" id="resource-cards"></div>
+
+  <h2 class="section-title">Units</h2>
+  <div class="cards-grid" id="units-summary-cards"></div>
+
+  <div class="controls" id="units-table-section" style="margin-top:18px;">
+    <input type="text" id="unit-search" placeholder="Filter units by name…">
+    <select id="unit-type-filter"><option value="all">All types</option></select>
+    <select id="unit-active-filter">
+      <option value="all">All active states</option>
+    </select>
+    <label><input type="checkbox" id="unit-problems-only"> Problems only</label>
+    <span class="count" id="unit-count"></span>
+  </div>
+  <div class="table-wrap">
+    <table id="units-table">
+      <thead><tr>
+        <th data-key="name">Unit</th>
+        <th data-key="type">Type</th>
+        <th data-key="loadState">Load</th>
+        <th data-key="activeState">Active</th>
+        <th class="num" data-key="nrestarts">Restarts</th>
+        <th data-key="errno">Errno</th>
+        <th data-key="activeSince">Active since</th>
+        <th data-key="stateChanged">State changed</th>
+      </tr></thead>
+      <tbody id="units-tbody"></tbody>
+    </table>
+  </div>
+
+  <footer id="footer"></footer>
+</div>
+
+<script id="report-data" type="application/json">__REPORT_JSON__</script>
+<script id="describe-data" type="application/json">__DESCRIBE_JSON__</script>
+<script id="errno-data" type="application/json">__ERRNO_JSON__</script>
+<script>
+const REPORT = JSON.parse(document.getElementById('report-data').textContent);
+const DESCRIBE = JSON.parse(document.getElementById('describe-data').textContent);
+const ERRNO = JSON.parse(document.getElementById('errno-data').textContent);
+const METRICS = REPORT.metrics || [];
+
+/* ---------- small helpers ---------- */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function el(tag, attrs, html) {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    if (k === 'class') e.className = attrs[k];
+    else if (k === 'text') e.textContent = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  if (html != null) e.innerHTML = html;
+  return e;
+}
+function desc(family) {
+  const d = DESCRIBE[family];
+  return d ? d.description : '';
+}
+function byName(name) {
+  return METRICS.filter(m => m.name === name);
+}
+function value1(name) {
+  const m = METRICS.find(x => x.name === name);
+  return m ? m.value : undefined;
+}
+function fieldsMatch(fields, want) {
+  if (!fields) return false;
+  for (const k in want) if (fields[k] !== want[k]) return false;
+  return true;
+}
+function pick(name, want) {
+  const m = METRICS.find(x => x.name === name && fieldsMatch(x.fields, want));
+  return m ? m.value : undefined;
+}
+
+function fmtBytes(n) {
+  if (n == null || isNaN(n)) return '—';
+  const units = ['B','KiB','MiB','GiB','TiB','PiB'];
+  let v = n, i = 0;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  const dec = i === 0 ? 0 : (v < 10 ? 2 : v < 100 ? 1 : 0);
+  return v.toFixed(dec) + ' ' + units[i];
+}
+function fmtDurationSeconds(s) {
+  if (s == null || isNaN(s)) return '—';
+  const neg = s < 0;
+  s = Math.abs(s);
+  if (s < 1) return (neg ? '-' : '') + Math.round(s * 1000) + ' ms';
+  const days = Math.floor(s / 86400); s -= days * 86400;
+  const hrs = Math.floor(s / 3600); s -= hrs * 3600;
+  const mins = Math.floor(s / 60); s -= mins * 60;
+  const secs = Math.floor(s);
+  const parts = [];
+  if (days) parts.push(days + 'd');
+  if (days || hrs) parts.push(hrs + 'h');
+  if (days || hrs || mins) parts.push(mins + 'm');
+  if (!days) parts.push(secs + 's');
+  return (neg ? '-' : '') + parts.slice(0, 3).join(' ');
+}
+function parseReportTimestamp(str) {
+  const m = /(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/.exec(str || '');
+  if (!m) return Date.now();
+  return Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]);
+}
+const REPORT_EPOCH_MS = parseReportTimestamp(REPORT.timestamp);
+function usToMs(us) { return us / 1000; }
+function fmtAbsoluteUs(us) {
+  if (!us) return '—';
+  return new Date(usToMs(us)).toISOString().replace('T', ' ').replace('Z', ' UTC');
+}
+function fmtAgoUs(us, opts) {
+  opts = opts || {};
+  if (!us) return opts.zero || '—';
+  const deltaS = (REPORT_EPOCH_MS - usToMs(us)) / 1000;
+  if (deltaS < 0) return 'just now';
+  return fmtDurationSeconds(deltaS) + ' ago';
+}
+function fmtRelativeUs(us) {
+  if (!us) return '—';
+  const deltaS = (usToMs(us) - REPORT_EPOCH_MS) / 1000;
+  if (deltaS >= 0) return 'in ' + fmtDurationSeconds(deltaS);
+  return fmtDurationSeconds(-deltaS) + ' ago';
+}
+function unescapeUnitName(name) {
+  return name.replace(/\\x([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+}
+function unitType(name) {
+  const m = /\.([a-zA-Z0-9]+)$/.exec(name);
+  return m ? m[1] : 'other';
+}
+function severityColor(sev) {
+  return { good: 'var(--good)', warning: 'var(--warning)', serious: 'var(--serious)', critical: 'var(--critical)' }[sev] || 'var(--series-1)';
+}
+function fillMeter(container, pct, sev, labelName, statText, subText, title) {
+  const row = el('div', { class: 'meter-row' });
+  if (title) row.title = title;
+  const labelRow = el('div', { class: 'label-row' });
+  labelRow.appendChild(el('span', { class: 'name', text: labelName }));
+  labelRow.appendChild(el('span', { class: 'stat', text: statText }));
+  row.appendChild(labelRow);
+  const track = el('div', { class: 'meter-track' });
+  const fill = el('div', { class: 'meter-fill' });
+  fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+  fill.style.background = severityColor(sev);
+  track.appendChild(fill);
+  row.appendChild(track);
+  if (subText) row.appendChild(el('div', { class: 'meter-sub', text: subText }));
+  container.appendChild(row);
+}
+
+/* ---------- header ---------- */
+(function renderHeader() {
+  const hostname = value1('io.systemd.Basic.Hostname') || '(unknown host)';
+  const prettyHost = pick('io.systemd.Basic.MachineInfo.PRETTY_HOSTNAME', {});
+  document.getElementById('hdr-host').textContent = prettyHost ? `${prettyHost} (${hostname})` : hostname;
+  const osName = value1('io.systemd.Basic.OSRelease.NAME') || '';
+  const osVer = value1('io.systemd.Basic.OSRelease.VERSION_ID') || '';
+  const kernel = value1('io.systemd.Basic.KernelVersion') || '';
+  const arch = value1('io.systemd.Basic.Architecture') || '';
+  document.getElementById('hdr-os').textContent = [osName, osVer, kernel && `kernel ${kernel}`, arch].filter(Boolean).join(' · ');
+
+  const state = value1('io.systemd.Manager.SystemState');
+  if (state) {
+    const sev = state === 'running' ? 'good' : (state === 'degraded' ? 'critical' : 'warning');
+    const span = el('span', {}, '');
+    span.innerHTML = `<span class="badge" style="background:${severityColor(sev)}">${escapeHtml(state)}</span>`;
+    document.getElementById('hdr-state').appendChild(span);
+  }
+  const finishRt = value1('io.systemd.Manager.FinishTimestamp.Realtime') || value1('io.systemd.Manager.UserspaceTimestamp.Realtime');
+  if (finishRt) {
+    const uptimeS = (REPORT_EPOCH_MS - usToMs(finishRt)) / 1000;
+    document.getElementById('hdr-uptime').textContent = 'up ' + fmtDurationSeconds(uptimeS);
+  }
+  document.getElementById('hdr-time').textContent = 'report: ' + (REPORT.timestamp || '—');
+})();
+
+(function themeToggle() {
+  const btn = document.getElementById('theme-toggle');
+  const order = [null, 'dark', 'light'];
+  const labels = { null: 'Theme: Auto', dark: 'Theme: Dark', light: 'Theme: Light' };
+  let i = 0;
+  function apply() {
+    const mode = order[i];
+    if (mode) document.documentElement.setAttribute('data-theme', mode);
+    else document.documentElement.removeAttribute('data-theme');
+    btn.textContent = labels[mode];
+  }
+  btn.addEventListener('click', () => { i = (i + 1) % order.length; apply(); });
+  apply();
+})();
+
+/* ---------- identity / hardware / rebootmgr / boot timeline cards ---------- */
+function kv(container, label, val, title) {
+  if (val == null || val === '') return;
+  const row = el('div', { class: 'kv' });
+  if (title) row.title = title;
+  row.appendChild(el('span', { class: 'k', text: label }));
+  row.appendChild(el('span', { class: 'v', text: val }));
+  container.appendChild(row);
+}
+
+(function renderIdentityCards() {
+  const grid = document.getElementById('identity-cards');
+
+  const idCard = el('div', { class: 'card' });
+  idCard.appendChild(el('h3', { text: 'Identity' }));
+  kv(idCard, 'Machine ID', value1('io.systemd.Basic.MachineID'), desc('io.systemd.Basic.MachineID'));
+  kv(idCard, 'Boot ID', value1('io.systemd.Basic.BootID'), desc('io.systemd.Basic.BootID'));
+  kv(idCard, 'Virtualization', value1('io.systemd.Basic.Virtualization'), desc('io.systemd.Basic.Virtualization'));
+  kv(idCard, 'Confidential VM', value1('io.systemd.Basic.ConfidentialVirtualization'), desc('io.systemd.Basic.ConfidentialVirtualization'));
+  kv(idCard, 'systemd version', value1('io.systemd.Manager.Version'), desc('io.systemd.Manager.Version'));
+  kv(idCard, 'CPUs online', value1('io.systemd.Basic.CPUsOnline'), desc('io.systemd.Basic.CPUsOnline'));
+  const deployment = pick('io.systemd.Basic.MachineInfo.DEPLOYMENT', {});
+  const location = pick('io.systemd.Basic.MachineInfo.LOCATION', {});
+  const tags = pick('io.systemd.Basic.MachineInfo.TAGS', {});
+  kv(idCard, 'Deployment', deployment, desc('io.systemd.Basic.MachineInfo.DEPLOYMENT'));
+  kv(idCard, 'Location', location, desc('io.systemd.Basic.MachineInfo.LOCATION'));
+  kv(idCard, 'Tags', tags, desc('io.systemd.Basic.MachineInfo.TAGS'));
+  if (idCard.children.length > 1) grid.appendChild(idCard);
+
+  const hwCard = el('div', { class: 'card' });
+  hwCard.appendChild(el('h3', { text: 'Hardware' }));
+  kv(hwCard, 'Manufacturer', value1('io.systemd.Basic.SMBIOS.SystemManufacturer'));
+  kv(hwCard, 'Product', value1('io.systemd.Basic.SMBIOS.SystemProductName'));
+  kv(hwCard, 'Version', value1('io.systemd.Basic.SMBIOS.SystemVersion'));
+  kv(hwCard, 'Chassis', value1('io.systemd.Basic.SMBIOS.ChassisManufacturer'));
+  kv(hwCard, 'Chassis type', value1('io.systemd.Basic.SMBIOS.ChassisType'));
+  kv(hwCard, 'Firmware vendor', value1('io.systemd.Basic.SMBIOS.FirmwareVendor'));
+  kv(hwCard, 'Firmware version', value1('io.systemd.Basic.SMBIOS.FirmwareVersion'));
+  kv(hwCard, 'Firmware date', value1('io.systemd.Basic.SMBIOS.FirmwareReleaseDate'));
+  kv(hwCard, 'TPM2 manufacturer', value1('io.systemd.Basic.TPM2.Manufacturer'));
+  kv(hwCard, 'TPM2 vendor', value1('io.systemd.Basic.TPM2.VendorString'));
+  if (hwCard.children.length > 1) grid.appendChild(hwCard);
+
+  const rm = byName('org.openSUSE.rebootmgr.RebootStatus');
+  if (rm.length) {
+    const c = el('div', { class: 'card' });
+    c.appendChild(el('h3', { text: 'rebootmgr' }));
+    const rmStatus = value1('org.openSUSE.rebootmgr.RebootStatus');
+    if (rmStatus) {
+      const pending = rmStatus !== 'not-requested';
+      const row = el('div', { class: 'kv' });
+      row.title = desc('org.openSUSE.rebootmgr.RebootStatus');
+      row.appendChild(el('span', { class: 'k', text: 'Status' }));
+      const vSpan = el('span', { class: 'v' });
+      if (pending) vSpan.innerHTML = `<span class="badge" style="background:var(--warning)">${escapeHtml(rmStatus)}</span>`;
+      else vSpan.textContent = rmStatus;
+      row.appendChild(vSpan);
+      c.appendChild(row);
+    }
+    kv(c, 'Method', value1('org.openSUSE.rebootmgr.RebootMethod'), desc('org.openSUSE.rebootmgr.RebootMethod'));
+    const scheduled = value1('org.openSUSE.rebootmgr.RebootScheduledTime');
+    if (scheduled) kv(c, 'Scheduled for', `${fmtAbsoluteUs(scheduled)} (${fmtRelativeUs(scheduled)})`, desc('org.openSUSE.rebootmgr.RebootScheduledTime'));
+    kv(c, 'Strategy', value1('org.openSUSE.rebootmgr.RebootStrategy'));
+    kv(c, 'Disabled', value1('org.openSUSE.rebootmgr.RebootDisabled'));
+    const winStart = value1('org.openSUSE.rebootmgr.MaintenanceWindowStart');
+    const winDur = value1('org.openSUSE.rebootmgr.MaintenanceWindowDuration');
+    kv(c, 'Maintenance window', winStart ? `${winStart} (+${fmtDurationSeconds(winDur)})` : null);
+    kv(c, 'Version', value1('org.openSUSE.rebootmgr.Version'));
+    grid.appendChild(c);
+  }
+
+  // boot timeline
+  const phases = [
+    ['Firmware', 'io.systemd.Manager.FirmwareTimestamp.Realtime'],
+    ['Boot loader', 'io.systemd.Manager.LoaderTimestamp.Realtime'],
+    ['Kernel', 'io.systemd.Manager.KernelTimestamp.Realtime'],
+    ['initrd', 'io.systemd.Manager.InitRDTimestamp.Realtime'],
+    ['initrd generators', 'io.systemd.Manager.InitRDGeneratorsFinishTimestamp.Realtime'],
+    ['initrd units loaded', 'io.systemd.Manager.InitRDUnitsLoadFinishTimestamp.Realtime'],
+    ['Security policy loaded', 'io.systemd.Manager.SecurityFinishTimestamp.Realtime'],
+    ['Generators', 'io.systemd.Manager.GeneratorsFinishTimestamp.Realtime'],
+    ['Units loaded', 'io.systemd.Manager.UnitsLoadFinishTimestamp.Realtime'],
+    ['Userspace reached', 'io.systemd.Manager.UserspaceTimestamp.Realtime'],
+    ['Boot finished', 'io.systemd.Manager.FinishTimestamp.Realtime'],
+  ];
+  const rows = phases.map(([label, name]) => [label, value1(name), desc(name)]).filter(r => r[1]);
+  if (rows.length) {
+    const c = el('div', { class: 'card' });
+    c.appendChild(el('h3', { text: 'Boot timeline' }));
+    let prev = null;
+    rows.sort((a, b) => a[1] - b[1]);
+    for (const [label, us, d] of rows) {
+      const row = el('div', { class: 'kv' }, '');
+      row.title = d || '';
+      const delta = prev != null ? '+' + fmtDurationSeconds((us - prev) / 1e6) : '';
+      row.appendChild(el('span', { class: 'k', text: label }));
+      row.appendChild(el('span', { class: 'v mono', text: delta }));
+      c.appendChild(row);
+      prev = us;
+    }
+    grid.appendChild(c);
+  }
+})();
+
+/* ---------- resource cards ---------- */
+(function renderResourceCards() {
+  const grid = document.getElementById('resource-cards');
+
+  // Memory
+  {
+    const c = el('div', { class: 'card' });
+    c.appendChild(el('h3', { text: 'Memory' }));
+    const used = value1('io.systemd.Basic.MemoryUsedBytes');
+    const total = value1('io.systemd.Basic.PhysicalMemoryBytes');
+    if (total) {
+      const pct = used / total * 100;
+      const sev = pct > 90 ? 'critical' : pct > 70 ? 'warning' : 'good';
+      fillMeter(c, pct, sev, 'Used', `${fmtBytes(used)} / ${fmtBytes(total)}`, pct.toFixed(1) + '% used',
+        desc('io.systemd.Basic.MemoryUsedBytes'));
+    }
+    const swapUsed = value1('io.systemd.Basic.SwapUsedBytes');
+    const swapTotal = value1('io.systemd.Basic.SwapBytes');
+    if (swapTotal) {
+      const pct = swapTotal ? swapUsed / swapTotal * 100 : 0;
+      const sev = pct > 50 ? 'critical' : pct > 10 ? 'warning' : 'good';
+      fillMeter(c, pct, sev, 'Swap', `${fmtBytes(swapUsed)} / ${fmtBytes(swapTotal)}`, pct.toFixed(1) + '% used',
+        desc('io.systemd.Basic.SwapUsedBytes'));
+    } else {
+      c.appendChild(el('div', { class: 'meter-sub', text: 'No swap configured' }));
+    }
+    grid.appendChild(c);
+  }
+
+  // Load average
+  {
+    const cpus = value1('io.systemd.Basic.CPUsOnline') || 1;
+    const c = el('div', { class: 'card' });
+    c.appendChild(el('h3', { text: 'Load average' }));
+    for (const [label, name] of [['1 min', 'io.systemd.Basic.LoadAverage1Min'], ['5 min', 'io.systemd.Basic.LoadAverage5Min'], ['15 min', 'io.systemd.Basic.LoadAverage15Min']]) {
+      const v = value1(name);
+      if (v == null) continue;
+      const ratio = v / cpus;
+      const sev = ratio > 1 ? 'critical' : ratio > 0.7 ? 'warning' : 'good';
+      fillMeter(c, Math.min(100, ratio * 100), sev, label, v.toFixed(2), null, desc(name));
+    }
+    c.appendChild(el('div', { class: 'meter-sub', text: `relative to ${cpus} CPU${cpus === 1 ? '' : 's'} online` }));
+    grid.appendChild(c);
+  }
+
+  // CPU time breakdown (stacked bar)
+  {
+    const segsDef = [
+      ['user', 'io.systemd.Basic.CPUUsage', { type: 'user' }, 'var(--series-1)'],
+      ['system', 'io.systemd.Basic.CPUUsage', { type: 'system' }, 'var(--series-2)'],
+      ['iowait', 'io.systemd.Basic.CPUWait', { type: 'iowait' }, 'var(--series-4)'],
+      ['steal', 'io.systemd.Basic.CPUWait', { type: 'steal' }, 'var(--series-8)'],
+      ['idle', 'io.systemd.Basic.CPUWait', { type: 'idle' }, 'var(--baseline)'],
+    ];
+    const segs = segsDef.map(([label, name, want, color]) => [label, pick(name, want), color]).filter(s => s[1] != null);
+    const total = segs.reduce((a, s) => a + s[1], 0);
+    if (total > 0) {
+      const c = el('div', { class: 'card' });
+      c.appendChild(el('h3', { text: 'CPU time since boot' }));
+      const bar = el('div', { class: 'stacked-bar' });
+      segs.forEach(([label, ns, color], idx) => {
+        const seg = el('div', { class: 'stacked-seg' });
+        const pct = ns / total * 100;
+        seg.style.width = pct + '%';
+        seg.style.background = color;
+        if (idx < segs.length - 1) seg.style.marginRight = '2px';
+        bar.appendChild(seg);
+      });
+      c.appendChild(bar);
+      const legend = el('div', { class: 'legend' });
+      for (const [label, ns, color] of segs) {
+        const item = el('div', { class: 'item' });
+        item.appendChild(el('span', { class: 'swatch', style: `background:${color}` }));
+        item.appendChild(el('span', { text: `${label} · ${fmtDurationSeconds(ns / 1e9)}` }));
+        legend.appendChild(item);
+      }
+      c.appendChild(legend);
+      c.appendChild(el('div', { class: 'meter-sub', text: 'Aggregated across all CPUs since boot (counters, not a live rate)' }));
+      grid.appendChild(c);
+    }
+  }
+
+  // Pressure (PSI)
+  {
+    const combos = [];
+    for (const resource of ['cpu', 'memory', 'io']) {
+      for (const type of ['some', 'full']) {
+        const avg = pick('io.systemd.Basic.PressureAvg10', { resource, type });
+        const stall = pick('io.systemd.Basic.PressureStallSeconds', { resource, type });
+        if (avg == null) continue;
+        combos.push({ resource, type, avg, stall });
+      }
+    }
+    if (combos.length) {
+      const c = el('div', { class: 'card' });
+      c.appendChild(el('h3', { text: 'Pressure (PSI, 10s avg)' }));
+      for (const { resource, type, avg, stall } of combos) {
+        const sev = avg > 10 ? 'critical' : avg > 1 ? 'warning' : 'good';
+        fillMeter(c, avg, sev, `${resource} · ${type}`, avg.toFixed(2) + '%',
+          stall != null ? `${fmtDurationSeconds(stall)} total stall` : null,
+          desc('io.systemd.Basic.PressureAvg10'));
+      }
+      grid.appendChild(c);
+    }
+  }
+
+  // Disk space
+  {
+    const mounts = byName('io.systemd.DiskSpace.SizeBytes');
+    if (mounts.length) {
+      const c = el('div', { class: 'card' });
+      c.appendChild(el('h3', { text: 'Disk space' }));
+      mounts.slice().sort((a, b) => a.object.localeCompare(b.object)).forEach(m => {
+        const size = m.value;
+        const freeM = METRICS.find(x => x.name === 'io.systemd.DiskSpace.FreeBytes' && x.object === m.object);
+        const freeBytes = freeM ? freeM.value : null;
+        if (freeBytes == null || !size) return;
+        const usedBytes = size - freeBytes;
+        const pct = usedBytes / size * 100;
+        const sev = pct > 90 ? 'critical' : pct > 70 ? 'warning' : 'good';
+        const sub = `${m.fields && m.fields.fileSystemType || ''} ${m.fields && m.fields.source || ''}`.trim();
+        fillMeter(c, pct, sev, m.object, `${fmtBytes(usedBytes)} / ${fmtBytes(size)}`, sub, desc('io.systemd.DiskSpace.SizeBytes'));
+      });
+      grid.appendChild(c);
+    }
+  }
+
+  // Disk I/O
+  {
+    const reads = byName('io.systemd.Basic.DiskReadBytes');
+    const writes = byName('io.systemd.Basic.DiskWriteBytes');
+    if (reads.length || writes.length) {
+      const c = el('div', { class: 'card bars-list' });
+      c.appendChild(el('h3', { text: 'Disk I/O (cumulative)' }));
+      function barList(title, items) {
+        if (!items.length) return;
+        c.appendChild(el('div', { style: 'font-size:12px;color:var(--text-secondary);margin:6px 0 2px;', text: title }));
+        const max = Math.max(...items.map(i => i.value), 1);
+        items.slice().sort((a, b) => b.value - a.value).forEach(i => {
+          const row = el('div', { class: 'bar-row' });
+          const lr = el('div', { class: 'label-row' });
+          lr.appendChild(el('span', { text: i.object }));
+          lr.appendChild(el('span', { text: fmtBytes(i.value) }));
+          row.appendChild(lr);
+          const track = el('div', { class: 'bar-track' });
+          const fill = el('div', { class: 'bar-fill' });
+          fill.style.width = (i.value / max * 100) + '%';
+          track.appendChild(fill);
+          row.appendChild(track);
+          c.appendChild(row);
+        });
+      }
+      barList('Read', reads);
+      barList('Written', writes);
+      grid.appendChild(c);
+    }
+  }
+})();
+
+/* ---------- units ---------- */
+const UNITS = (function buildUnits() {
+  const map = new Map();
+  function get(name) {
+    if (!map.has(name)) map.set(name, {
+      name, loadState: null, activeState: null, nrestarts: null, errno: null,
+      activeEnter: 0, activeExit: 0, stateChanged: 0, inactiveExit: 0,
+    });
+    return map.get(name);
+  }
+  for (const m of METRICS) {
+    if (!m.object) continue;
+    switch (m.name) {
+      case 'io.systemd.Manager.UnitLoadState': get(m.object).loadState = m.value; break;
+      case 'io.systemd.Manager.UnitActiveState': get(m.object).activeState = m.value; break;
+      case 'io.systemd.Manager.NRestarts': get(m.object).nrestarts = m.value; break;
+      case 'io.systemd.Manager.StatusErrno': get(m.object).errno = m.value; break;
+      case 'io.systemd.Manager.StateChangeTimestamp': get(m.object).stateChanged = m.value; break;
+      case 'io.systemd.Manager.InactiveExitTimestamp': get(m.object).inactiveExit = m.value; break;
+      case 'io.systemd.Manager.ActiveTimestamp':
+        if (m.fields && m.fields.event === 'enter') get(m.object).activeEnter = m.value;
+        else if (m.fields && m.fields.event === 'exit') get(m.object).activeExit = m.value;
+        break;
+    }
+  }
+  const list = [];
+  for (const u of map.values()) {
+    u.displayName = unescapeUnitName(u.name);
+    u.type = unitType(u.name);
+    u.isProblem = u.activeState === 'failed' ||
+      u.loadState === 'bad-setting' || u.loadState === 'error' ||
+      (u.errno || 0) !== 0;
+    list.push(u);
+  }
+  return list;
+})();
+
+const LOAD_STATE_COLOR = { loaded: null, 'not-found': 'var(--warning)', masked: 'var(--text-muted)', 'bad-setting': 'var(--critical)', error: 'var(--critical)', merged: 'var(--text-muted)', stub: 'var(--text-muted)' };
+const ACTIVE_STATE_COLOR = { active: 'var(--good)', inactive: 'var(--text-muted)', failed: 'var(--critical)', activating: 'var(--warning)', deactivating: 'var(--warning)', reloading: 'var(--warning)', maintenance: 'var(--serious)', refreshing: 'var(--warning)' };
+
+function badge(value, colorMap) {
+  if (value == null) return '—';
+  const color = colorMap[value];
+  if (!color) return escapeHtml(value);
+  return `<span class="badge" style="background:${color}">${escapeHtml(value)}</span>`;
+}
+function errnoLabel(n) {
+  if (n == null) return '—';
+  if (n === 0) return '0';
+  const name = ERRNO[n];
+  return name ? `${n} (${name})` : String(n);
+}
+
+/* ---------- problem banner ---------- */
+(function renderBanner() {
+  const problems = UNITS.filter(u => u.isProblem);
+  const el2 = document.getElementById('problem-banner');
+  if (problems.length) {
+    el2.innerHTML = `<div class="banner">⚠ ${problems.length} unit${problems.length === 1 ? '' : 's'} need attention (failed, bad config, or reporting an errno). <a href="#units-table-section">Jump to table</a> and enable “Problems only”.</div>`;
+  } else {
+    el2.innerHTML = `<div class="banner ok">✓ No failed units, bad configs, or reported errnos across ${UNITS.length} units.</div>`;
+  }
+})();
+
+/* ---------- units summary cards ---------- */
+(function renderUnitsSummary() {
+  const grid = document.getElementById('units-summary-cards');
+
+  const totalCard = el('div', { class: 'card' });
+  totalCard.appendChild(el('h3', { text: 'Totals' }));
+  kv(totalCard, 'Total units', value1('io.systemd.Manager.UnitsTotal'));
+  kv(totalCard, 'Jobs queued', value1('io.systemd.Manager.JobsQueued'));
+  kv(totalCard, 'Manager reloads', value1('io.systemd.Manager.ReloadCount'));
+  grid.appendChild(totalCard);
+
+  function chipCard(title, familyName, colorMap, fieldKey) {
+    const entries = byName(familyName);
+    if (!entries.length) return;
+    const c = el('div', { class: 'card' });
+    c.appendChild(el('h3', { text: title }));
+    const row = el('div', { class: 'chip-row' });
+    entries
+      .filter(e => e.value > 0 || ['active', 'failed', 'loaded'].includes(e.fields[fieldKey]))
+      .sort((a, b) => b.value - a.value)
+      .forEach(e => {
+        const key = e.fields[fieldKey];
+        const color = (colorMap[key]) || 'var(--text-muted)';
+        const chip = el('span', { class: 'chip' }, `<span class="dot" style="background:${color}"></span>${escapeHtml(key)} <b>${e.value}</b>`);
+        row.appendChild(chip);
+      });
+    c.appendChild(row);
+    grid.appendChild(c);
+  }
+  chipCard('By active state', 'io.systemd.Manager.UnitsByStateTotal', ACTIVE_STATE_COLOR, 'state');
+  chipCard('By load state', 'io.systemd.Manager.UnitsByLoadStateTotal',
+    Object.fromEntries(Object.entries(LOAD_STATE_COLOR).map(([k, v]) => [k, v || 'var(--good)'])), 'load_state');
+
+  const typeTotals = byName('io.systemd.Manager.UnitsByTypeTotal').filter(e => e.value > 0).sort((a, b) => b.value - a.value);
+  if (typeTotals.length) {
+    const c = el('div', { class: 'card bars-list' });
+    c.appendChild(el('h3', { text: 'By type' }));
+    const max = Math.max(...typeTotals.map(e => e.value));
+    typeTotals.forEach(e => {
+      const row = el('div', { class: 'bar-row' });
+      const lr = el('div', { class: 'label-row' });
+      lr.appendChild(el('span', { text: e.fields.type }));
+      lr.appendChild(el('span', { text: e.value }));
+      row.appendChild(lr);
+      const track = el('div', { class: 'bar-track' });
+      const fill = el('div', { class: 'bar-fill' });
+      fill.style.width = (e.value / max * 100) + '%';
+      track.appendChild(fill);
+      row.appendChild(track);
+      c.appendChild(row);
+    });
+    grid.appendChild(c);
+  }
+})();
+
+/* ---------- units table ---------- */
+(function unitsTable() {
+  const tbody = document.getElementById('units-tbody');
+  const searchInput = document.getElementById('unit-search');
+  const typeSelect = document.getElementById('unit-type-filter');
+  const activeSelect = document.getElementById('unit-active-filter');
+  const problemsOnly = document.getElementById('unit-problems-only');
+  const countEl = document.getElementById('unit-count');
+
+  const types = [...new Set(UNITS.map(u => u.type))].sort();
+  for (const t of types) typeSelect.appendChild(el('option', { value: t, text: t }));
+  const activeStates = [...new Set(UNITS.map(u => u.activeState).filter(Boolean))].sort();
+  for (const s of activeStates) activeSelect.appendChild(el('option', { value: s, text: s }));
+
+  let sortKey = 'name', sortDir = 1;
+
+  function compare(a, b) {
+    let av = a[sortKey], bv = b[sortKey];
+    if (sortKey === 'name') { av = a.displayName; bv = b.displayName; }
+    if (av == null) av = '';
+    if (bv == null) bv = '';
+    if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * sortDir;
+    return String(av).localeCompare(String(bv)) * sortDir;
+  }
+
+  function render() {
+    const q = searchInput.value.trim().toLowerCase();
+    const type = typeSelect.value;
+    const activeFilter = activeSelect.value;
+    const onlyProblems = problemsOnly.checked;
+    let rows = UNITS.filter(u => {
+      if (q && !u.displayName.toLowerCase().includes(q)) return false;
+      if (type !== 'all' && u.type !== type) return false;
+      if (activeFilter !== 'all' && u.activeState !== activeFilter) return false;
+      if (onlyProblems && !u.isProblem) return false;
+      return true;
+    });
+    rows.sort(compare);
+    countEl.textContent = `Showing ${rows.length} of ${UNITS.length} units`;
+
+    tbody.innerHTML = rows.map(u => `
+      <tr${u.isProblem ? ' style="background:color-mix(in srgb, var(--critical) 6%, transparent)"' : ''}>
+        <td class="unit-name" title="${escapeHtml(u.name)}">${escapeHtml(u.displayName)}</td>
+        <td>${escapeHtml(u.type)}</td>
+        <td>${badge(u.loadState, LOAD_STATE_COLOR)}</td>
+        <td>${badge(u.activeState, ACTIVE_STATE_COLOR)}</td>
+        <td class="num">${u.nrestarts != null ? u.nrestarts : '—'}</td>
+        <td>${errnoLabel(u.errno)}</td>
+        <td title="${u.activeEnter ? fmtAbsoluteUs(u.activeEnter) : ''}">${u.activeState === 'active' ? fmtAgoUs(u.activeEnter) : '—'}</td>
+        <td title="${u.stateChanged ? fmtAbsoluteUs(u.stateChanged) : ''}">${fmtAgoUs(u.stateChanged)}</td>
+      </tr>`).join('');
+  }
+
+  document.querySelectorAll('#units-table thead th').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+      document.querySelectorAll('#units-table thead th').forEach(t => t.classList.remove('sorted'));
+      th.classList.add('sorted');
+      render();
+    });
+  });
+  [searchInput, typeSelect, activeSelect, problemsOnly].forEach(elm =>
+    elm.addEventListener('input', render));
+
+  render();
+})();
+
+/* ---------- footer ---------- */
+(function renderFooter() {
+  const f = document.getElementById('footer');
+  f.innerHTML = `Report ID <code>${escapeHtml(REPORT.reportID || '')}</code> ·
+    media type <code>${escapeHtml(REPORT.mediaType || '')}</code> ·
+    ${METRICS.length} metrics across ${Object.keys(DESCRIBE).length} families ·
+    generated from <code>report.json</code> + <code>report.describe</code> by <code>gen_dashboard.py</code>.`;
+})();
+</script>
+</body>
+</html>
