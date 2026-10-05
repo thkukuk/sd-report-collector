@@ -53,7 +53,7 @@ at the built binary:
 
 ```
 [Plugins]
-dashboard=/usr/lib/sd-report-dashboard/sd-report-dashboard
+dashboard=/usr/lib/sd-report-collector/sd-report-dashboard
 ```
 
 It writes `<OutputDirectory>/<hostname>.html`, overwriting that host's
@@ -81,4 +81,9 @@ sd-report-certs init
 sd-report-certs client myhost.example.com
 
 systemctl start sd-report-collector.service
+```
+
+On the client call `systemd-report`:
+```sh
+/usr/lib/systemd/systemd-report upload --url=https://<server>:8443/report --cert=/etc/sd-report-collector/clients/myhost.pem --key=/etc/sd-report-collector/clients/myhost.key --trust=/etc/sd-report-collector/ca.pem
 ```

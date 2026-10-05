@@ -2,14 +2,6 @@ package config
 
 import "errors"
 
-const (
-	dashboardProjectName = "sd-report-dashboard"
-	dashboardConfigName  = "sd-report-dashboard"
-)
-
-// DashboardConfig holds the runtime configuration for the sd-report-dashboard
-// plugin, as read from sd-report-dashboard.conf (and its drop-ins) following
-// the UAPI.6 spec.
 type DashboardConfig struct {
 	// OutputDirectory is where "<hostname>.html" dashboards are written.
 	OutputDirectory string
@@ -18,18 +10,19 @@ type DashboardConfig struct {
 	// DescribeFile, if set, points at a "systemd-report describe" dump used
 	// to annotate metrics with their type and description.
 	DescribeFile string
+	// LogLevel controls slog's minimum level: debug, info, warn, or error.
+	LogLevel string
 }
 
 func dashboardDefaults() DashboardConfig {
 	return DashboardConfig{
 		OutputDirectory: "/var/lib/sd-report-collector/dashboards",
+		LogLevel:        "info",
 	}
 }
 
-// LoadDashboard reads the merged sd-report-dashboard configuration from the
-// standard UAPI.6 search path (/usr/lib, /run, /etc, with .d drop-ins).
 func LoadDashboard() (*DashboardConfig, error) {
-	kf, err := readConfig(dashboardProjectName, usrSubdir, dashboardConfigName, configSuffix)
+	kf, err := readConfig(projectName, usrSubdir, configName, configSuffix)
 	if errors.Is(err, ErrNoConfigFile) {
 		cfg := dashboardDefaults()
 		return &cfg, nil
@@ -48,6 +41,9 @@ func LoadDashboard() (*DashboardConfig, error) {
 		return nil, err
 	}
 	if cfg.DescribeFile, err = kf.getString("Dashboard", "DescribeFile", cfg.DescribeFile); err != nil {
+		return nil, err
+	}
+	if cfg.LogLevel, err = kf.getString("Dashboard", "LogLevel", cfg.LogLevel); err != nil {
 		return nil, err
 	}
 

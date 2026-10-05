@@ -24,11 +24,12 @@ func runOne(p config.Plugin, timeout time.Duration, fullPath string) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+	slog.Debug("Plugin started", "plugin", p.Name, "path", p.Path, "report", fullPath)
 	cmd := exec.CommandContext(ctx, p.Path, fullPath)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		slog.Error("plugin failed", "plugin", p.Name, "path", p.Path, "report", fullPath, "error", err, "output", string(output))
+		slog.Error("Plugin failed", "plugin", p.Name, "path", p.Path, "report", fullPath, "error", err, "output", string(output))
 		return
 	}
-	slog.Debug("plugin finished", "plugin", p.Name, "path", p.Path, "report", fullPath)
+	slog.Debug("Plugin finished", "plugin", p.Name, "path", p.Path, "report", fullPath)
 }

@@ -4,7 +4,6 @@ BUILD_DIR  := bin
 PREFIX                  ?= /usr
 BINDIR                  ?= $(PREFIX)/bin
 VENDOR_LIBDIR           ?= $(PREFIX)/lib/sd-report-collector
-VENDOR_DASHBOARD_LIBDIR ?= $(PREFIX)/lib/sd-report-dashboard
 UNITDIR                 ?= $(PREFIX)/lib/systemd/system
 
 GO      ?= go
@@ -36,8 +35,7 @@ install: build
 	install -D -m 0755 $(BUILD_DIR)/sd-report-collector $(DESTDIR)$(VENDOR_LIBDIR)/sd-report-collector
 	install -D -m 0644 dist/sd-report-collector.conf $(DESTDIR)$(VENDOR_LIBDIR)/sd-report-collector.conf
 	install -D -m 0644 dist/sd-report-collector.service $(DESTDIR)$(UNITDIR)/sd-report-collector.service
-	install -D -m 0755 $(BUILD_DIR)/sd-report-dashboard $(DESTDIR)$(VENDOR_DASHBOARD_LIBDIR)/sd-report-dashboard
-	install -D -m 0644 dist/sd-report-dashboard.conf $(DESTDIR)$(VENDOR_DASHBOARD_LIBDIR)/sd-report-dashboard.conf
+	install -D -m 0755 $(BUILD_DIR)/sd-report-dashboard $(DESTDIR)$(VENDOR_LIBDIR)/sd-report-dashboard
 
 clean:
 	rm -rf $(BUILD_DIR)

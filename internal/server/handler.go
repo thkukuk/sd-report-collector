@@ -28,7 +28,7 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, s.cfg.MaxReportSizeBytes)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		slog.Warn("rejecting report: body read failed", "hostname", hostname, "error", err)
+		slog.Warn("Rejecting report: body read failed", "hostname", hostname, "error", err)
 		http.Error(w, "request body too large or unreadable", http.StatusRequestEntityTooLarge)
 		return
 	}
@@ -36,17 +36,17 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 	meta := report.ExtractMeta(body)
 	timestamp := meta.Timestamp
 	if timestamp.IsZero() {
-		slog.Warn("report has no usable timestamp field, using receive time", "hostname", hostname)
+		slog.Warn("Report has no usable timestamp field, using receive time", "hostname", hostname)
 		timestamp = time.Now()
 	}
 
 	path, err := store.Save(s.cfg.BaseDirectory, hostname, timestamp, meta.ReportID, body)
 	if err != nil {
-		slog.Error("failed to save report", "hostname", hostname, "error", err)
+		slog.Error("Failed to save report", "hostname", hostname, "error", err)
 		http.Error(w, "failed to store report", http.StatusInternalServerError)
 		return
 	}
-	slog.Info("report saved", "hostname", hostname, "path", path)
+	slog.Info("Report saved", "hostname", hostname, "path", path)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

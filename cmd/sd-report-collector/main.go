@@ -24,6 +24,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	level, err := config.ParseLogLevel(cfg.LogLevel)
+	if err != nil {
+		slog.Error("Invalid LogLevel", "value", cfg.LogLevel, "error", err)
+		os.Exit(1)
+	}
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})))
+
 	srv, err := server.New(cfg)
 	if err != nil {
 		slog.Error("Failed to initialize server", "error", err)
