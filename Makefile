@@ -15,7 +15,7 @@ all: build
 
 build:
 	for bin in $(BINARIES); do \
-		$(GO) build $(GOFLAGS) -o $(BUILD_DIR)/$$bin ./cmd/$$bin; \
+		$(GO) build -buildmode=pie $(GOFLAGS) -o $(BUILD_DIR)/$$bin ./cmd/$$bin; \
 	done
 
 test:
