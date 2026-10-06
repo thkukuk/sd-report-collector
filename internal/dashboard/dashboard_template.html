@@ -600,30 +600,6 @@ function kv(container, label, val, title) {
     }
   }
 
-  // Pressure (PSI)
-  {
-    const combos = [];
-    for (const resource of ['cpu', 'memory', 'io']) {
-      for (const type of ['some', 'full']) {
-        const avg = pick('io.systemd.Basic.PressureAvg10', { resource, type });
-        const stall = pick('io.systemd.Basic.PressureStallSeconds', { resource, type });
-        if (avg == null) continue;
-        combos.push({ resource, type, avg, stall });
-      }
-    }
-    if (combos.length) {
-      const c = el('div', { class: 'card' });
-      c.appendChild(el('h3', { text: 'Pressure (PSI, 10s avg)' }));
-      for (const { resource, type, avg, stall } of combos) {
-        const sev = avg > 10 ? 'critical' : avg > 1 ? 'warning' : 'good';
-        fillMeter(c, avg, sev, `${resource} · ${type}`, avg.toFixed(2) + '%',
-          stall != null ? `${fmtDurationSeconds(stall)} total stall` : null,
-          desc('io.systemd.Basic.PressureAvg10'));
-      }
-      grid.appendChild(c);
-    }
-  }
-
   // Disk space
   {
     const mounts = byName('io.systemd.DiskSpace.SizeBytes');
@@ -675,6 +651,31 @@ function kv(container, label, val, title) {
       grid.appendChild(c);
     }
   }
+
+  // Pressure (PSI)
+  {
+    const combos = [];
+    for (const resource of ['cpu', 'memory', 'io']) {
+      for (const type of ['some', 'full']) {
+        const avg = pick('io.systemd.Basic.PressureAvg10', { resource, type });
+        const stall = pick('io.systemd.Basic.PressureStallSeconds', { resource, type });
+        if (avg == null) continue;
+        combos.push({ resource, type, avg, stall });
+      }
+    }
+    if (combos.length) {
+      const c = el('div', { class: 'card' });
+      c.appendChild(el('h3', { text: 'Pressure (PSI, 10s avg)' }));
+      for (const { resource, type, avg, stall } of combos) {
+        const sev = avg > 10 ? 'critical' : avg > 1 ? 'warning' : 'good';
+        fillMeter(c, avg, sev, `${resource} · ${type}`, avg.toFixed(2) + '%',
+          stall != null ? `${fmtDurationSeconds(stall)} total stall` : null,
+          desc('io.systemd.Basic.PressureAvg10'));
+      }
+      grid.appendChild(c);
+    }
+  }
+
 })();
 
 /* ---------- units ---------- */
@@ -869,8 +870,7 @@ function errnoLabel(n) {
   const f = document.getElementById('footer');
   f.innerHTML = `Report ID <code>${escapeHtml(REPORT.reportID || '')}</code> ·
     media type <code>${escapeHtml(REPORT.mediaType || '')}</code> ·
-    ${METRICS.length} metrics across ${Object.keys(DESCRIBE).length} families ·
-    generated from <code>report.json</code> + <code>report.describe</code> by <code>gen_dashboard.py</code>.`;
+    ${METRICS.length} metrics across ${Object.keys(DESCRIBE).length} families`;
 })();
 </script>
 </body>
