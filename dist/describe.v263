@@ -1,0 +1,134 @@
+FAMILY                                                           TYPE    DESCRIPTION
+io.systemd.Basic.Architecture                                    string  CPU architecture
+io.systemd.Basic.BootID                                          string  Current boot ID
+io.systemd.Basic.CPUUsage                                        counter Aggregate CPU usage across all CPUs in nanoseconds (type=user|system)
+io.systemd.Basic.CPUWait                                         gauge   Aggregate CPU wait across all CPUs in nanoseconds (type=idle|iowait|steal)
+io.systemd.Basic.CPUsOnline                                      gauge   Number of CPUs currently online
+io.systemd.Basic.ConfidentialVirtualization                      string  Confidential computing technology
+io.systemd.Basic.DiskReadBytes                                   counter Per block device metric: cumulative number of bytes read (partitions, stacked and virtual devices are excluded)
+io.systemd.Basic.DiskWriteBytes                                  counter Per block device metric: cumulative number of bytes written (partitions, stacked and virtual devices are excluded)
+io.systemd.Basic.Hostname                                        string  System hostname
+io.systemd.Basic.KernelVersion                                   string  Kernel version
+io.systemd.Basic.LoadAverage15Min                                gauge   System load average over the last 15 minutes
+io.systemd.Basic.LoadAverage1Min                                 gauge   System load average over the last 1 minute
+io.systemd.Basic.LoadAverage5Min                                 gauge   System load average over the last 5 minutes
+io.systemd.Basic.MachineID                                       string  Machine ID
+io.systemd.Basic.MachineInfo.DEPLOYMENT                          string  Machine identification (DEPLOYMENT= field from machine-info)
+io.systemd.Basic.MachineInfo.LOCATION                            string  Machine identification (LOCATION= field from machine-info)
+io.systemd.Basic.MachineInfo.PRETTY_HOSTNAME                     string  Pretty hostname (PRETTY_HOSTNAME= field from machine-info)
+io.systemd.Basic.MachineInfo.TAGS                                string  Machine identification (TAGS= field from machine-info)
+io.systemd.Basic.MemoryUsedBytes                                 gauge   Memory currently in use (MemTotal minus MemAvailable) in bytes
+io.systemd.Basic.OSRelease.BUILD_ID                              string  Operating system identification (BUILD_ID= field from os-release)
+io.systemd.Basic.OSRelease.CONFEXT_LEVEL                         string  Operating system identification (CONFEXT_LEVEL= field from os-release)
+io.systemd.Basic.OSRelease.CPE_NAME                              string  Operating system identification (CPE_NAME= field from os-release)
+io.systemd.Basic.OSRelease.EXPERIMENT                            string  Operating system identification (EXPERIMENT= field from os-release)
+io.systemd.Basic.OSRelease.ID                                    string  Operating system identification (ID= field from os-release)
+io.systemd.Basic.OSRelease.IMAGE_ID                              string  Operating system identification (IMAGE_ID= field from os-release)
+io.systemd.Basic.OSRelease.IMAGE_VERSION                         string  Operating system identification (IMAGE_VERSION= field from os-release)
+io.systemd.Basic.OSRelease.NAME                                  string  Operating system human-readable name (PRETTY_NAME= or NAME= field from os-release)
+io.systemd.Basic.OSRelease.SUPPORT_END                           string  Operating system identification (SUPPORT_END= field from os-release)
+io.systemd.Basic.OSRelease.SYSEXT_LEVEL                          string  Operating system identification (SYSEXT_LEVEL= field from os-release)
+io.systemd.Basic.OSRelease.VARIANT_ID                            string  Operating system identification (VARIANT_ID= field from os-release)
+io.systemd.Basic.OSRelease.VERSION_ID                            string  Operating system identification (VERSION_ID= field from os-release)
+io.systemd.Basic.PhysicalMemoryBytes                             gauge   Installed physical memory in bytes
+io.systemd.Basic.PressureAvg10                                   gauge   Pressure stall percentage over the last 10s (resource=cpu|memory|io, type=some|full)
+io.systemd.Basic.PressureStallSeconds                            counter Cumulative time stalled on a resource, in seconds (resource=cpu|memory|io, type=some|full)
+io.systemd.Basic.SMBIOS.BaseBoardAssetTag                        string  Firmware/hardware identification (BaseBoardAssetTag field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.BaseBoardManufacturer                    string  Firmware/hardware identification (BaseBoardManufacturer field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.BaseBoardProduct                         string  Firmware/hardware identification (BaseBoardProduct field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.BaseBoardSerial                          string  Firmware/hardware identification (BaseBoardSerial field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.BaseBoardVersion                         string  Firmware/hardware identification (BaseBoardVersion field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.ChassisAssetTagNumber                    string  Firmware/hardware identification (ChassisAssetTagNumber field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.ChassisManufacturer                      string  Firmware/hardware identification (ChassisManufacturer field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.ChassisSerialNumber                      string  Firmware/hardware identification (ChassisSerialNumber field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.ChassisType                              string  Firmware/hardware identification (ChassisType field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.FirmwareReleaseDate                      string  Firmware/hardware identification (FirmwareReleaseDate field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.FirmwareVendor                           string  Firmware/hardware identification (FirmwareVendor field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.FirmwareVersion                          string  Firmware/hardware identification (FirmwareVersion field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.SystemFamily                             string  Firmware/hardware identification (SystemFamily field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.SystemManufacturer                       string  Firmware/hardware identification (SystemManufacturer field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.SystemProductName                        string  Firmware/hardware identification (SystemProductName field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.SystemSKUNumber                          string  Firmware/hardware identification (SystemSKUNumber field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.SystemSerialNumber                       string  Firmware/hardware identification (SystemSerialNumber field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.SystemUUID                               string  Firmware/hardware identification (SystemUUID field from SMBIOS/DMI)
+io.systemd.Basic.SMBIOS.SystemVersion                            string  Firmware/hardware identification (SystemVersion field from SMBIOS/DMI)
+io.systemd.Basic.SwapBytes                                       gauge   Total configured swap space in bytes
+io.systemd.Basic.SwapUsedBytes                                   gauge   Swap space currently in use in bytes
+io.systemd.Basic.TPM2.Manufacturer                               string  TPM2 device manufacturer (ID_TPM2_MANUFACTURER property of the tpmrm0 device)
+io.systemd.Basic.TPM2.VendorString                               string  TPM2 device vendor string (ID_TPM2_VENDOR_STRING property of the tpmrm0 device)
+io.systemd.Basic.Virtualization                                  string  Virtualization type
+io.systemd.DiskSpace.FreeBytes                                   gauge   Per file system metric: disk space available to unprivileged users in bytes, on writable block device backed file systems (object=mount point, fileSystemType=file system type, source=backing device, originatingSource=device the backing device is stacked on, if any)
+io.systemd.DiskSpace.SizeBytes                                   gauge   Per file system metric: file system size in bytes, on writable block device backed file systems (object=mount point, fileSystemType=file system type, source=backing device, originatingSource=device the backing device is stacked on, if any)
+io.systemd.HWMon.TemperatureCelsius                              gauge   Per hwmon sensor metric: current temperature in degrees Celsius (object=parent device, chip=hwmon chip name, sensor=temp<N>, label=sensor label if any)
+io.systemd.Manager.ActiveTimestamp                               gauge   Per unit metric: timestamp of active state transitions in microseconds; 0 indicates the transition has not occurred
+io.systemd.Manager.FinishTimestamp.Monotonic                     gauge   CLOCK_MONOTONIC microseconds at which userspace finished booting
+io.systemd.Manager.FinishTimestamp.Realtime                      gauge   CLOCK_REALTIME microseconds at which userspace finished booting
+io.systemd.Manager.FirmwareTimestamp.Realtime                    gauge   CLOCK_REALTIME microseconds at which the firmware began execution (CLOCK_MONOTONIC is a pre-kernel offset, not reported)
+io.systemd.Manager.GeneratorsFinishTimestamp.Monotonic           gauge   CLOCK_MONOTONIC microseconds at which the manager finished executing generators
+io.systemd.Manager.GeneratorsFinishTimestamp.Realtime            gauge   CLOCK_REALTIME microseconds at which the manager finished executing generators
+io.systemd.Manager.GeneratorsStartTimestamp.Monotonic            gauge   CLOCK_MONOTONIC microseconds at which the manager started executing generators
+io.systemd.Manager.GeneratorsStartTimestamp.Realtime             gauge   CLOCK_REALTIME microseconds at which the manager started executing generators
+io.systemd.Manager.InactiveExitTimestamp                         gauge   Per unit metric: timestamp when the unit last exited the inactive state in microseconds; 0 indicates the transition has not occurred
+io.systemd.Manager.InitRDGeneratorsFinishTimestamp.Monotonic     gauge   CLOCK_MONOTONIC microseconds at which the manager finished executing generators in the initrd
+io.systemd.Manager.InitRDGeneratorsFinishTimestamp.Realtime      gauge   CLOCK_REALTIME microseconds at which the manager finished executing generators in the initrd
+io.systemd.Manager.InitRDGeneratorsStartTimestamp.Monotonic      gauge   CLOCK_MONOTONIC microseconds at which the manager started executing generators in the initrd
+io.systemd.Manager.InitRDGeneratorsStartTimestamp.Realtime       gauge   CLOCK_REALTIME microseconds at which the manager started executing generators in the initrd
+io.systemd.Manager.InitRDSecurityFinishTimestamp.Monotonic       gauge   CLOCK_MONOTONIC microseconds at which the manager finished uploading security policies to the kernel in the initrd
+io.systemd.Manager.InitRDSecurityFinishTimestamp.Realtime        gauge   CLOCK_REALTIME microseconds at which the manager finished uploading security policies to the kernel in the initrd
+io.systemd.Manager.InitRDSecurityStartTimestamp.Monotonic        gauge   CLOCK_MONOTONIC microseconds at which the manager started uploading security policies to the kernel in the initrd
+io.systemd.Manager.InitRDSecurityStartTimestamp.Realtime         gauge   CLOCK_REALTIME microseconds at which the manager started uploading security policies to the kernel in the initrd
+io.systemd.Manager.InitRDTimestamp.Monotonic                     gauge   CLOCK_MONOTONIC microseconds at which the initrd began execution
+io.systemd.Manager.InitRDTimestamp.Realtime                      gauge   CLOCK_REALTIME microseconds at which the initrd began execution
+io.systemd.Manager.InitRDUnitsLoadFinishTimestamp.Monotonic      gauge   CLOCK_MONOTONIC microseconds at which the manager first finished loading units in the initrd
+io.systemd.Manager.InitRDUnitsLoadFinishTimestamp.Realtime       gauge   CLOCK_REALTIME microseconds at which the manager first finished loading units in the initrd
+io.systemd.Manager.InitRDUnitsLoadStartTimestamp.Monotonic       gauge   CLOCK_MONOTONIC microseconds at which the manager first started loading units in the initrd
+io.systemd.Manager.InitRDUnitsLoadStartTimestamp.Realtime        gauge   CLOCK_REALTIME microseconds at which the manager first started loading units in the initrd
+io.systemd.Manager.JobsQueued                                    gauge   Number of jobs currently queued
+io.systemd.Manager.KernelTimestamp.Realtime                      gauge   CLOCK_REALTIME microseconds at which the kernel started (CLOCK_MONOTONIC == 0)
+io.systemd.Manager.LoaderTimestamp.Realtime                      gauge   CLOCK_REALTIME microseconds at which the boot loader began execution (CLOCK_MONOTONIC is a pre-kernel offset, not reported)
+io.systemd.Manager.NRestarts                                     counter Per unit metric: number of restarts
+io.systemd.Manager.PreviousShutdownFinishTimestamp.Monotonic     gauge   CLOCK_MONOTONIC microseconds at which all units finished stopping during the shutdown of the previous boot, if available (e.g.: kexec or soft-reboot)
+io.systemd.Manager.PreviousShutdownFinishTimestamp.Realtime      gauge   CLOCK_REALTIME microseconds at which all units finished stopping during the shutdown of the previous boot, if available (e.g.: kexec or soft-reboot)
+io.systemd.Manager.PreviousShutdownLateFinishTimestamp.Monotonic gauge   CLOCK_MONOTONIC microseconds at which systemd-shutdown was about to kexec into the current kernel during the previous boot, restored from the LUO payload after a kexec-based live update
+io.systemd.Manager.PreviousShutdownLateFinishTimestamp.Realtime  gauge   CLOCK_REALTIME microseconds at which systemd-shutdown was about to kexec into the current kernel during the previous boot, restored from the LUO payload after a kexec-based live update
+io.systemd.Manager.PreviousShutdownLateStartTimestamp.Monotonic  gauge   CLOCK_MONOTONIC microseconds at which systemd-shutdown began execution during the previous boot, restored from the LUO payload after a kexec-based live update
+io.systemd.Manager.PreviousShutdownLateStartTimestamp.Realtime   gauge   CLOCK_REALTIME microseconds at which systemd-shutdown began execution during the previous boot, restored from the LUO payload after a kexec-based live update
+io.systemd.Manager.PreviousShutdownStartTimestamp.Monotonic      gauge   CLOCK_MONOTONIC microseconds at which shutdown began during the previous boot, i.e. units started to be stopped, if available (e.g.: kexec or soft-reboot)
+io.systemd.Manager.PreviousShutdownStartTimestamp.Realtime       gauge   CLOCK_REALTIME microseconds at which shutdown began during the previous boot, i.e. units started to be stopped, if available (e.g.: kexec or soft-reboot)
+io.systemd.Manager.ReloadCount                                   counter Number of successful manager reloads since startup; resets across daemon-reexec
+io.systemd.Manager.SecurityFinishTimestamp.Monotonic             gauge   CLOCK_MONOTONIC microseconds at which the manager finished uploading security policies to the kernel
+io.systemd.Manager.SecurityFinishTimestamp.Realtime              gauge   CLOCK_REALTIME microseconds at which the manager finished uploading security policies to the kernel
+io.systemd.Manager.SecurityStartTimestamp.Monotonic              gauge   CLOCK_MONOTONIC microseconds at which the manager started uploading security policies to the kernel
+io.systemd.Manager.SecurityStartTimestamp.Realtime               gauge   CLOCK_REALTIME microseconds at which the manager started uploading security policies to the kernel
+io.systemd.Manager.ShutdownFinishTimestamp.Monotonic             gauge   CLOCK_MONOTONIC microseconds at which all units finished stopping during shutdown
+io.systemd.Manager.ShutdownFinishTimestamp.Realtime              gauge   CLOCK_REALTIME microseconds at which all units finished stopping during shutdown
+io.systemd.Manager.ShutdownStartTimestamp.Monotonic              gauge   CLOCK_MONOTONIC microseconds at which shutdown began, i.e. units started to be stopped
+io.systemd.Manager.ShutdownStartTimestamp.Realtime               gauge   CLOCK_REALTIME microseconds at which shutdown began, i.e. units started to be stopped
+io.systemd.Manager.StateChangeTimestamp                          gauge   Per unit metric: timestamp of the last state change in microseconds; 0 indicates no state change has occurred
+io.systemd.Manager.StatusErrno                                   gauge   Per service metric: errno status of the service
+io.systemd.Manager.SystemState                                   string  Overall system state
+io.systemd.Manager.UnitActiveState                               string  Per unit metric: active state
+io.systemd.Manager.UnitLoadState                                 string  Per unit metric: load state
+io.systemd.Manager.UnitsByLoadStateTotal                         gauge   Total number of units by load state
+io.systemd.Manager.UnitsByStateTotal                             gauge   Total number of units of different state
+io.systemd.Manager.UnitsByTypeTotal                              gauge   Total number of units of different types
+io.systemd.Manager.UnitsLoadFinishTimestamp.Monotonic            gauge   CLOCK_MONOTONIC microseconds at which the manager first finished loading units
+io.systemd.Manager.UnitsLoadFinishTimestamp.Realtime             gauge   CLOCK_REALTIME microseconds at which the manager first finished loading units
+io.systemd.Manager.UnitsLoadStartTimestamp.Monotonic             gauge   CLOCK_MONOTONIC microseconds at which the manager first started loading units
+io.systemd.Manager.UnitsLoadStartTimestamp.Realtime              gauge   CLOCK_REALTIME microseconds at which the manager first started loading units
+io.systemd.Manager.UnitsLoadTimestamp.Monotonic                  gauge   CLOCK_MONOTONIC microseconds at which the manager last started loading units
+io.systemd.Manager.UnitsLoadTimestamp.Realtime                   gauge   CLOCK_REALTIME microseconds at which the manager last started loading units
+io.systemd.Manager.UnitsTotal                                    gauge   Total number of units
+io.systemd.Manager.UserspaceTimestamp.Monotonic                  gauge   CLOCK_MONOTONIC microseconds at which userspace was reached
+io.systemd.Manager.UserspaceTimestamp.Realtime                   gauge   CLOCK_REALTIME microseconds at which userspace was reached
+io.systemd.Manager.Version                                       string  Version of systemd
+org.openSUSE.rebootmgr.MaintenanceWindowDuration                 gauge   Duration of the configured maintenance window in seconds
+org.openSUSE.rebootmgr.MaintenanceWindowStart                    string  Start of the configured maintenance window as calendar specification
+org.openSUSE.rebootmgr.RebootDisabled                            string  Whether reboots are temporarily disabled
+org.openSUSE.rebootmgr.RebootMethod                              string  Which kind of reboot was requested (reboot or soft-reboot), if any
+org.openSUSE.rebootmgr.RebootScheduledTime                       gauge   Microseconds at which a pending reboot is scheduled for, if any
+org.openSUSE.rebootmgr.RebootStatus                              string  Whether a reboot or soft-reboot is requested, and if so, in which state it is
+org.openSUSE.rebootmgr.RebootStrategy                            string  Currently configured reboot strategy
+org.openSUSE.rebootmgr.Version                                   string  Version of rebootmgr
+
+131 metrics listed.

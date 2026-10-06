@@ -36,6 +36,7 @@ install: build
 	install -D -m 0644 dist/sd-report-collector.conf $(DESTDIR)$(VENDOR_LIBDIR)/sd-report-collector.conf
 	install -D -m 0644 dist/sd-report-collector.service $(DESTDIR)$(UNITDIR)/sd-report-collector.service
 	install -D -m 0755 $(BUILD_DIR)/sd-report-dashboard $(DESTDIR)$(VENDOR_LIBDIR)/sd-report-dashboard
+	install -D -m 0644 dist/describe.v263 $(DESTDIR)$(VENDOR_LIBDIR)/describe.v263
 
 clean:
 	rm -rf $(BUILD_DIR)
