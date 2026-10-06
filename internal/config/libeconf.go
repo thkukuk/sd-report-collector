@@ -87,6 +87,14 @@ func (k *keyFile) Close() {
 
 // getString returns the string value for group/key, or def if absent.
 func (k *keyFile) getString(group, key, def string) (string, error) {
+	val, _, err := k.getStringIn(group, key, def)
+	return val, err
+}
+
+// getStringIn returns the string value for group/key, and whether the key
+// was actually present in that group (as opposed to def being returned
+// because it was absent).
+func (k *keyFile) getStringIn(group, key, def string) (string, bool, error) {
 	cGroup := C.CString(group)
 	defer C.free(unsafe.Pointer(cGroup))
 	cKey := C.CString(key)
@@ -97,10 +105,25 @@ func (k *keyFile) getString(group, key, def string) (string, error) {
 	var result *C.char
 	rc := C.econf_getStringValueDef(k.ptr, cGroup, cKey, &result, cDef)
 	if rc != C.ECONF_SUCCESS && rc != C.ECONF_NOKEY {
-		return "", econfError(rc)
+		return "", false, econfError(rc)
 	}
 	defer C.free(unsafe.Pointer(result))
-	return C.GoString(result), nil
+	return C.GoString(result), rc == C.ECONF_SUCCESS, nil
+}
+
+// getStringFallback looks up key in each of groups in order, returning the
+// value from the first group that has it set, or def if none do.
+func (k *keyFile) getStringFallback(groups []string, key, def string) (string, error) {
+	for _, group := range groups {
+		val, found, err := k.getStringIn(group, key, def)
+		if err != nil {
+			return "", err
+		}
+		if found {
+			return val, nil
+		}
+	}
+	return def, nil
 }
 
 // getInt returns the int value for group/key, or def if absent.

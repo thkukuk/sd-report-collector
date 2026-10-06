@@ -84,7 +84,7 @@ func Load() (*Config, error) {
 	if cfg.PluginTimeoutSec, err = kf.getInt("Server", "PluginTimeoutSec", cfg.PluginTimeoutSec); err != nil {
 		return nil, err
 	}
-	if cfg.LogLevel, err = kf.getString("Server", "LogLevel", cfg.LogLevel); err != nil {
+	if cfg.LogLevel, err = kf.getStringFallback([]string{"Global", "Server"}, "LogLevel", cfg.LogLevel); err != nil {
 		return nil, err
 	}
 

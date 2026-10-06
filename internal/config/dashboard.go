@@ -43,7 +43,7 @@ func LoadDashboard() (*DashboardConfig, error) {
 	if cfg.DescribeFile, err = kf.getString("Dashboard", "DescribeFile", cfg.DescribeFile); err != nil {
 		return nil, err
 	}
-	if cfg.LogLevel, err = kf.getString("Dashboard", "LogLevel", cfg.LogLevel); err != nil {
+	if cfg.LogLevel, err = kf.getStringFallback([]string{"Global", "Dashboard"}, "LogLevel", cfg.LogLevel); err != nil {
 		return nil, err
 	}
 

@@ -71,3 +71,53 @@ notify=/bin/false
 		t.Errorf("getKeys(NoSuchGroup) = %v, want empty", empty)
 	}
 }
+
+func TestGetStringFallback(t *testing.T) {
+	dir := t.TempDir()
+
+	write := func(name, content string) *keyFile {
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatalf("writing fixture config: %v", err)
+		}
+		kf, err := readFile(path)
+		if err != nil {
+			t.Fatalf("readFile: %v", err)
+		}
+		t.Cleanup(kf.Close)
+		return kf
+	}
+
+	t.Run("prefers Global over Server", func(t *testing.T) {
+		kf := write("global-wins.conf", "[Global]\nLogLevel=debug\n\n[Server]\nLogLevel=warn\n")
+		got, err := kf.getStringFallback([]string{"Global", "Server"}, "LogLevel", "info")
+		if err != nil {
+			t.Fatalf("getStringFallback: %v", err)
+		}
+		if got != "debug" {
+			t.Errorf("LogLevel = %q, want %q", got, "debug")
+		}
+	})
+
+	t.Run("falls back to Server when Global unset", func(t *testing.T) {
+		kf := write("server-only.conf", "[Server]\nLogLevel=warn\n")
+		got, err := kf.getStringFallback([]string{"Global", "Server"}, "LogLevel", "info")
+		if err != nil {
+			t.Fatalf("getStringFallback: %v", err)
+		}
+		if got != "warn" {
+			t.Errorf("LogLevel = %q, want %q", got, "warn")
+		}
+	})
+
+	t.Run("uses default when neither set", func(t *testing.T) {
+		kf := write("neither.conf", "[Server]\nListenAddress=127.0.0.1:9443\n")
+		got, err := kf.getStringFallback([]string{"Global", "Server"}, "LogLevel", "info")
+		if err != nil {
+			t.Fatalf("getStringFallback: %v", err)
+		}
+		if got != "info" {
+			t.Errorf("LogLevel = %q, want %q", got, "info")
+		}
+	})
+}
