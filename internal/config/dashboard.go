@@ -1,6 +1,9 @@
 package config
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 type DashboardConfig struct {
 	// OutputDirectory is where "<hostname>.html" dashboards are written.
@@ -10,6 +13,9 @@ type DashboardConfig struct {
 	// DescribeFile, if set, points at a "systemd-report describe" dump used
 	// to annotate metrics with their type and description.
 	DescribeFile string
+	// Hosts lists the hostnames offered by the dashboard's host switcher,
+	// read from the comma-separated "Hosts" key.
+	Hosts []string
 	// LogLevel controls slog's minimum level: debug, info, warn, or error.
 	LogLevel string
 }
@@ -43,9 +49,27 @@ func LoadDashboard() (*DashboardConfig, error) {
 	if cfg.DescribeFile, err = kf.getString("Dashboard", "DescribeFile", cfg.DescribeFile); err != nil {
 		return nil, err
 	}
+	hostsCSV, err := kf.getString("Dashboard", "Hosts", "")
+	if err != nil {
+		return nil, err
+	}
+	cfg.Hosts = splitCSV(hostsCSV)
 	if cfg.LogLevel, err = kf.getStringFallback([]string{"Global", "Dashboard"}, "LogLevel", cfg.LogLevel); err != nil {
 		return nil, err
 	}
 
 	return &cfg, nil
+}
+
+// splitCSV splits a comma-separated list, trimming whitespace and dropping
+// empty entries.
+func splitCSV(s string) []string {
+	var result []string
+	for _, part := range strings.Split(s, ",") {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			result = append(result, part)
+		}
+	}
+	return result
 }

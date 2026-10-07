@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/klauspost/compress/zstd"
@@ -60,14 +61,14 @@ func Generate(cfg *config.DashboardConfig, reportPath string) (string, int, erro
 		return "", 0, err
 	}
 
-	html, err := render(tmpl, reportJSON, describe)
-	if err != nil {
-		return "", 0, err
-	}
-
 	hostname := filepath.Base(filepath.Dir(reportPath))
 	if hostname == "." || hostname == string(filepath.Separator) || hostname == "" {
 		hostname = "unknown"
+	}
+
+	html, err := render(tmpl, reportJSON, describe, hostList(cfg.Hosts, hostname), hostname)
+	if err != nil {
+		return "", 0, err
 	}
 
 	if err := os.MkdirAll(cfg.OutputDirectory, 0o750); err != nil {
@@ -101,11 +102,27 @@ func loadTemplate(path string) ([]byte, error) {
 	return data, nil
 }
 
-// render substitutes the template's three JSON placeholders. reportJSON is
+// hostList returns the configured hosts plus current (deduplicated and
+// sorted), so the dashboard's host switcher always offers at least the host
+// it was just generated for, even if it's missing from the configuration.
+func hostList(configured []string, current string) []string {
+	set := map[string]struct{}{current: {}}
+	for _, h := range configured {
+		set[h] = struct{}{}
+	}
+	hosts := make([]string, 0, len(set))
+	for h := range set {
+		hosts = append(hosts, h)
+	}
+	sort.Strings(hosts)
+	return hosts
+}
+
+// render substitutes the template's JSON placeholders. reportJSON is
 // compacted in place (not re-marshaled) so large integer timestamps survive
-// byte-for-byte; describe and the errno table are small and built by us, so
-// marshaling them fresh is fine.
-func render(tmpl []byte, reportJSON []byte, describe map[string]DescribeEntry) ([]byte, error) {
+// byte-for-byte; describe, the errno table and the host list are small and
+// built by us, so marshaling them fresh is fine.
+func render(tmpl []byte, reportJSON []byte, describe map[string]DescribeEntry, hosts []string, currentHost string) ([]byte, error) {
 	var compactReport bytes.Buffer
 	if err := json.Compact(&compactReport, reportJSON); err != nil {
 		return nil, fmt.Errorf("compacting report JSON: %w", err)
@@ -119,11 +136,21 @@ func render(tmpl []byte, reportJSON []byte, describe map[string]DescribeEntry) (
 	if err != nil {
 		return nil, fmt.Errorf("marshaling errno table: %w", err)
 	}
+	hostsJSON, err := json.Marshal(hosts)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling host list: %w", err)
+	}
+	currentHostJSON, err := json.Marshal(currentHost)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling current host: %w", err)
+	}
 
 	html := string(tmpl)
 	html = strings.Replace(html, "__REPORT_JSON__", escapeScript(compactReport.Bytes()), 1)
 	html = strings.Replace(html, "__DESCRIBE_JSON__", escapeScript(descJSON), 1)
 	html = strings.Replace(html, "__ERRNO_JSON__", escapeScript(errnoJSON), 1)
+	html = strings.Replace(html, "__HOSTS_JSON__", escapeScript(hostsJSON), 1)
+	html = strings.Replace(html, "__CURRENT_HOST_JSON__", escapeScript(currentHostJSON), 1)
 	return []byte(html), nil
 }
 

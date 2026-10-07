@@ -96,8 +96,13 @@
   }
   .topbar h1 { font-size: 18px; margin: 0; font-weight: 600; }
   .topbar .sub { color: var(--text-secondary); font-size: 13px; }
-  .topbar .right { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--text-secondary); }
-  .theme-toggle {
+  .topbar .right {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+    font-size: 13px; color: var(--text-secondary);
+  }
+  .topbar .right-top { display: flex; align-items: center; gap: 10px; }
+  .topbar .right-bottom { display: flex; align-items: center; gap: 16px; }
+  .host-select, .theme-toggle {
     border: 1px solid var(--border); background: var(--page); color: var(--text-primary);
     border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;
   }
@@ -207,10 +212,15 @@
     <div class="sub" id="hdr-os">—</div>
   </div>
   <div class="right">
-    <span id="hdr-state"></span>
-    <span id="hdr-uptime"></span>
-    <span id="hdr-time"></span>
-    <button class="theme-toggle" id="theme-toggle" type="button">Theme</button>
+    <div class="right-top">
+      <select class="host-select" id="host-select"></select>
+      <button class="theme-toggle" id="theme-toggle" type="button">Theme</button>
+    </div>
+    <div class="right-bottom">
+      <span id="hdr-state"></span>
+      <span id="hdr-uptime"></span>
+      <span id="hdr-time"></span>
+    </div>
   </div>
 </div>
 
@@ -257,10 +267,14 @@
 <script id="report-data" type="application/json">__REPORT_JSON__</script>
 <script id="describe-data" type="application/json">__DESCRIBE_JSON__</script>
 <script id="errno-data" type="application/json">__ERRNO_JSON__</script>
+<script id="hosts-data" type="application/json">__HOSTS_JSON__</script>
+<script id="current-host-data" type="application/json">__CURRENT_HOST_JSON__</script>
 <script>
 const REPORT = JSON.parse(document.getElementById('report-data').textContent);
 const DESCRIBE = JSON.parse(document.getElementById('describe-data').textContent);
 const ERRNO = JSON.parse(document.getElementById('errno-data').textContent);
+const HOSTS = JSON.parse(document.getElementById('hosts-data').textContent);
+const CURRENT_HOST = JSON.parse(document.getElementById('current-host-data').textContent);
 const METRICS = REPORT.metrics || [];
 
 /* ---------- small helpers ---------- */
@@ -412,6 +426,21 @@ function fillMeter(container, pct, sev, labelName, statText, subText, title) {
   }
   btn.addEventListener('click', () => { i = (i + 1) % order.length; apply(); });
   apply();
+})();
+
+(function hostSwitcher() {
+  const select = document.getElementById('host-select');
+  if (!HOSTS.length) {
+    select.style.display = 'none';
+    return;
+  }
+  for (const host of HOSTS) select.appendChild(el('option', { value: host, text: host }));
+  select.value = CURRENT_HOST;
+  select.addEventListener('change', () => {
+    if (select.value && select.value !== CURRENT_HOST) {
+      window.location.href = encodeURIComponent(select.value) + '.html';
+    }
+  });
 })();
 
 /* ---------- identity / hardware / rebootmgr / boot timeline cards ---------- */
