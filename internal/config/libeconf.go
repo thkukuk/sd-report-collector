@@ -141,6 +141,21 @@ func (k *keyFile) getInt(group, key string, def int64) (int64, error) {
 	return int64(result), nil
 }
 
+// getBool returns the bool value for group/key, or def if absent.
+func (k *keyFile) getBool(group, key string, def bool) (bool, error) {
+	cGroup := C.CString(group)
+	defer C.free(unsafe.Pointer(cGroup))
+	cKey := C.CString(key)
+	defer C.free(unsafe.Pointer(cKey))
+
+	result := C.bool(def)
+	rc := C.econf_getBoolValueDef(k.ptr, cGroup, cKey, &result, C.bool(def))
+	if rc != C.ECONF_SUCCESS && rc != C.ECONF_NOKEY {
+		return false, econfError(rc)
+	}
+	return bool(result), nil
+}
+
 // getKeys returns the sorted key names of the given group. An absent group
 // yields an empty slice, not an error.
 func (k *keyFile) getKeys(group string) ([]string, error) {

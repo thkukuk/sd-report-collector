@@ -89,6 +89,62 @@ respectively. `DescribeFile` should point at the output of
 
 ![Example Dashboard](localhost.html.png)
 
+## InfluxDB plugin and Grafana dashboard
+
+`sd-report-influxdb` is an sd-report-collector plugin that exports a saved
+report's metrics to InfluxDB, so they can be graphed over time in Grafana.
+Point a `[Plugins]` entry at the built binary:
+
+```
+[Plugins]
+influxdb=/usr/lib/sd-report-collector/sd-report-influxdb
+```
+
+and configure the InfluxDB server to write to:
+
+```
+[InfluxDB]
+Server=influxdb.example.com
+Bucket=sd-report-collector
+Organization=my-org
+Token=<token>
+```
+
+`Token` can also be supplied via the `INFLUXDB_TOKEN` environment variable
+instead of the config file. See `dist/sd-report-collector.conf` for all keys
+and their defaults.
+
+Each metric family becomes an InfluxDB measurement (e.g.
+`io.systemd.Basic.LoadAverage1Min`), with its value written to a single
+`value` field. The report's hostname and the metric's `object` (if any, e.g.
+a unit name, mount point, or device) and label fields (e.g. `type`,
+`resource`, `source`) become tags. The report's own report ID is
+intentionally not stored, since it is unique per upload and would otherwise
+explode series cardinality.
+
+Metric families can be excluded from export with `ExcludeMetrics`, a
+comma-separated list of patterns matched against the family name, e.g.:
+
+```
+[InfluxDB]
+ExcludeMetrics=io.systemd.Manager.*,io.systemd.Basic.CPUUsage
+```
+
+A pattern ending in `*` excludes every family with that prefix (here, the
+whole `io.systemd.Manager` family, covering per-unit timestamps and state
+noise most dashboards don't need); any other pattern must match a family
+name exactly.
+
+`dist/grafana-dashboard.json` is a ready-to-import Grafana dashboard built
+around that layout, covering the same ground as the HTML dashboard above:
+system identity and reboot status, memory/swap/load/CPU/pressure over time,
+disk space and I/O, and unit counts by state, type, and load state. Import it
+via Grafana's "Import dashboard" screen, pick an InfluxDB datasource
+configured with Flux as its query language, and set the `bucket` dashboard
+variable to match `[InfluxDB] Bucket` above (it defaults to
+`sd-report-collector`). The `host` variable then lists the hosts found in
+that bucket.
+
 ## Todo
 
 * Verify the report signature

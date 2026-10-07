@@ -33,6 +33,7 @@ binaries = {
   'sd-report-certs': get_option('bindir'),
   'sd-report-collector': vendor_libdir,
   'sd-report-dashboard': vendor_libdir,
+  'sd-report-influxdb': vendor_libdir,
 }
 
 built_binaries = {}
