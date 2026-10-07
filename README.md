@@ -5,9 +5,6 @@ Server counterpart to `systemd-report upload`
 Accepts report pushes over mTLS, stores each one zstd-compressed under a
 per-hostname directory, and runs configured plugins against the saved file.
 
-Report signature verification (the client's optional `--sign=`) is out of
-scope for the core daemon; a plugin can implement it if needed.
-
 ## Build
 
 Requires `libeconf` development headers (`libeconf-devel` / `libeconf-dev`)
@@ -91,3 +88,9 @@ On the client call `systemd-report`:
 ## Dashboard
 
 ![Example Dashboard](localhost.html.png)
+
+## Todo
+
+* Verify the report signature
+  * by the collector before writing to disk
+  * by the plugin and add result to html output
