@@ -72,7 +72,8 @@ dashboard=/usr/lib/sd-report-collector/sd-report-dashboard
 
 It writes `<OutputDirectory>/<hostname>.html`, overwriting that host's
 dashboard in place each time a new report arrives. The HTML template is
-compiled into the binary, but can be overriden via `sd-report-dashboard.conf`:
+compiled into the binary, but can be overriden via a snippet in
+`/etc/sd-report-collector/sd-report-collector.conf.d/`:
 
 ```
 [Dashboard]
