@@ -87,3 +87,7 @@ On the client call `systemd-report`:
 ```sh
 /usr/lib/systemd/systemd-report upload --url=https://<server>:8443/report --cert=/etc/sd-report-collector/clients/myhost.pem --key=/etc/sd-report-collector/clients/myhost.key --trust=/etc/sd-report-collector/ca.pem
 ```
+
+## Dashboard
+
+![Example Dashboard](localhost.html.png)
