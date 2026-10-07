@@ -11,8 +11,9 @@ Requires `libeconf` development headers (`libeconf-devel` / `libeconf-dev`)
 and a C compiler, since configuration parsing uses cgo bindings to libeconf.
 
 ```
-make
-make test
+meson setup build
+meson compile -C build
+meson test -C build
 ```
 
 ## Quickstart
