@@ -15,6 +15,22 @@ make
 make test
 ```
 
+## Quickstart
+
+Generate the CA, server cert, and a client cert under /etc/sd-report-collector and start the service:
+
+```sh
+sd-report-certs init
+sd-report-certs client myhost.example.com
+
+systemctl start sd-report-collector.service
+```
+
+On the client call `systemd-report`:
+```sh
+/usr/lib/systemd/systemd-report upload --url=https://<server>:8443/report --cert=/etc/sd-report-collector/clients/myhost.pem --key=/etc/sd-report-collector/clients/myhost.key --trust=/etc/sd-report-collector/ca.pem
+```
+
 ## Configuration
 
 See `dist/sd-report-collector.conf` for all keys and their defaults.
@@ -68,24 +84,6 @@ DescribeFile=/etc/sd-report-dashboard/report.describe
 built-in template and omits per-metric type/description annotations,
 respectively. `DescribeFile` should point at the output of
 `systemd-report describe`.
-
-## Quickstart
-
-Generate the CA, server cert, and a client cert under /etc/sd-report-collector and start the service:
-
-```sh
-sd-report-certs init
-sd-report-certs client myhost.example.com
-
-systemctl start sd-report-collector.service
-```
-
-On the client call `systemd-report`:
-```sh
-/usr/lib/systemd/systemd-report upload --url=https://<server>:8443/report --cert=/etc/sd-report-collector/clients/myhost.pem --key=/etc/sd-report-collector/clients/myhost.key --trust=/etc/sd-report-collector/ca.pem
-```
-
-## Dashboard
 
 ![Example Dashboard](localhost.html.png)
 
