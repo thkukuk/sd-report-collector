@@ -3,7 +3,7 @@
     {
       "name": "DS_INFLUXDB",
       "label": "InfluxDB",
-      "description": "InfluxDB datasource holding sd-report-influxdb's data, configured with Flux as its query language.",
+      "description": "InfluxDB datasource holding systemd-reports data, configured with Flux as its query language.",
       "type": "datasource",
       "pluginId": "influxdb",
       "pluginName": "InfluxDB"
@@ -138,7 +138,7 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Manager.SystemState\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Manager.SystemState\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> drop(columns: [\"_time\"])",
           "refId": "A"
         }
       ],
@@ -153,7 +153,7 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "",
+          "fields": "/.*/",
           "values": false
         },
         "textMode": "auto"
@@ -453,6 +453,318 @@
         "x": 0,
         "y": 5
       },
+      "id": 100,
+      "panels": [],
+      "title": "Reboot Status",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "not-requested": {
+                  "text": "Not Requested",
+                  "color": "green"
+                },
+                "requested": {
+                  "text": "Requested",
+                  "color": "yellow"
+                },
+                "waiting-window": {
+                  "text": "Waiting for Window",
+                  "color": "blue"
+                },
+                "unknown": {
+                  "text": "Unknown",
+                  "color": "red"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 6
+      },
+      "id": 101,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.rebootmgr.RebootStatus\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> drop(columns: [\"_time\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Reboot Status",
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 6
+      },
+      "id": 102,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.rebootmgr.RebootMethod\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> drop(columns: [\"_time\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Reboot Method",
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 6
+      },
+      "id": 103,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.rebootmgr.RebootStrategy\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> drop(columns: [\"_time\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Reboot Strategy",
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "true": {
+                  "text": "Disabled",
+                  "color": "red"
+                },
+                "false": {
+                  "text": "Enabled",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 6
+      },
+      "id": 104,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.rebootmgr.RebootDisabled\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> drop(columns: [\"_time\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Reboots Disabled",
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 105,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"${host}\" and r._field == \"value\" and (\n       r._measurement == \"org.openSUSE.rebootmgr.RebootRequestTime\" or\n       r._measurement == \"org.openSUSE.rebootmgr.RebootScheduledTime\" or\n       r._measurement == \"org.openSUSE.rebootmgr.MaintenanceWindowStart\" or\n       r._measurement == \"org.openSUSE.rebootmgr.MaintenanceWindowDuration\" or\n       r._measurement == \"org.openSUSE.rebootmgr.Version\"\n     ))\n  |> last()\n  |> map(fn: (r) => ({r with _value: string(v: r._value)}))\n  |> group()\n  |> keep(columns: [\"_measurement\", \"_value\"])\n  |> rename(columns: {_measurement: \"metric\", _value: \"value\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Reboot Schedule & Maintenance Window",
+      "type": "table",
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
       "id": 8,
       "panels": [],
       "title": "Resources",
@@ -484,7 +796,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 6
+        "y": 17
       },
       "id": 9,
       "targets": [
@@ -549,7 +861,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 6
+        "y": 17
       },
       "id": 10,
       "targets": [
@@ -614,7 +926,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 14
+        "y": 25
       },
       "id": 11,
       "targets": [
@@ -687,7 +999,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 14
+        "y": 25
       },
       "id": 12,
       "targets": [
@@ -724,7 +1036,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 33
       },
       "id": 13,
       "panels": [],
@@ -757,7 +1069,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 34
       },
       "id": 14,
       "targets": [
@@ -794,7 +1106,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 42
       },
       "id": 15,
       "panels": [],
@@ -819,7 +1131,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 43
       },
       "id": 16,
       "targets": [
@@ -828,15 +1140,23 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "free = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.DiskSpace.FreeBytes\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> keep(columns: [\"object\", \"source\", \"fileSystemType\", \"_value\"])\n  |> rename(columns: {_value: \"free_bytes\"})\n\nsize = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.DiskSpace.SizeBytes\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> rename(columns: {_value: \"size_bytes\"})\n\njoin(tables: {free: free, size: size}, on: [\"object\"])\n  |> rename(columns: {object: \"mount\"})",
+          "query": "free = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.DiskSpace.FreeBytes\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> keep(columns: [\"object\", \"source\", \"fileSystemType\", \"_value\"])\n  |> rename(columns: {_value: \"free_bytes\"})\n\nsize = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.DiskSpace.SizeBytes\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> rename(columns: {_value: \"size_bytes\"})\n\njoin(tables: {free: free, size: size}, on: [\"object\"])\n  |> map(fn: (r) => ({ _time: now(), _field: r.object + \" (\" + r.fileSystemType + \", \" + r.source + \")\", _value: r.size_bytes - r.free_bytes }))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")",
           "refId": "A"
         }
       ],
       "title": "Disk Space by Mount",
-      "type": "table",
+      "type": "bargauge",
       "options": {
-        "showHeader": true,
-        "cellHeight": "sm"
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true
       }
     },
     {
@@ -865,7 +1185,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 43
       },
       "id": 17,
       "targets": [
@@ -910,7 +1230,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 51
       },
       "id": 18,
       "panels": [],
@@ -943,7 +1263,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 41
+        "y": 52
       },
       "id": 19,
       "targets": [
@@ -952,7 +1272,7 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Manager.UnitsByStateTotal\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> group(columns: [\"state\"])",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Manager.UnitsByStateTotal\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> group()\n  |> map(fn: (r) => ({ _time: now(), _field: r.state, _value: r._value }))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")",
           "refId": "A"
         }
       ],
@@ -997,7 +1317,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 41
+        "y": 52
       },
       "id": 20,
       "targets": [
@@ -1006,7 +1326,7 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Manager.UnitsByTypeTotal\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> group(columns: [\"type\"])",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Manager.UnitsByTypeTotal\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> group()\n  |> map(fn: (r) => ({ _time: now(), _field: r.type, _value: r._value }))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")",
           "refId": "A"
         }
       ],
@@ -1051,7 +1371,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 41
+        "y": 52
       },
       "id": 21,
       "targets": [
@@ -1060,7 +1380,7 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Manager.UnitsByLoadStateTotal\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> group(columns: [\"load_state\"])",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Manager.UnitsByLoadStateTotal\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> group()\n  |> map(fn: (r) => ({ _time: now(), _field: r.load_state, _value: r._value }))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")",
           "refId": "A"
         }
       ],
@@ -1089,7 +1409,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 49
+        "y": 60
       },
       "id": 22,
       "panels": [],
@@ -1114,7 +1434,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 50
+        "y": 61
       },
       "id": 23,
       "targets": [
@@ -1152,7 +1472,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 50
+        "y": 61
       },
       "id": 24,
       "targets": [
@@ -1189,7 +1509,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 58
+        "y": 69
       },
       "id": 25,
       "targets": [
@@ -1226,7 +1546,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 58
+        "y": 69
       },
       "id": 26,
       "targets": [
