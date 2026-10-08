@@ -98,12 +98,26 @@ func buildPoints(reportPath string, exclude []string) (string, []*write.Point, e
 
 	points := make([]*write.Point, 0, len(doc.Metrics))
 	for _, m := range doc.Metrics {
-		if m.Name == "" || matchesAny(m.Name, exclude) {
+		if m.Name == "" || matchesAny(m.Name, exclude) || !scalarValue(m.Value) {
 			continue
 		}
 		points = append(points, metricPoint(m, hostname, timestamp))
 	}
 	return hostname, points, nil
+}
+
+// scalarValue reports whether v (a decoded JSON metric value) can be written
+// as a single InfluxDB field. Object- and array-valued metrics (e.g.
+// io.systemd.Journal.HighPriorityMessage, whose value is a full journal
+// entry) can't be flattened into one field, and including them would make
+// the whole batch write fail instead of just that point.
+func scalarValue(v interface{}) bool {
+	switch v.(type) {
+	case map[string]interface{}, []interface{}:
+		return false
+	default:
+		return true
+	}
 }
 
 // matchesAny reports whether name matches any of patterns: a pattern ending

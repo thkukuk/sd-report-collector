@@ -46,11 +46,11 @@ func TestBuildPointsFromFixtureReport(t *testing.T) {
 	if hostname != "myhost" {
 		t.Errorf("hostname = %q, want %q", hostname, "myhost")
 	}
-	if len(points) != 3232 {
-		t.Errorf("len(points) = %d, want 3232", len(points))
+	if len(points) != 3739 {
+		t.Errorf("len(points) = %d, want 3739", len(points))
 	}
 
-	wantTime, err := time.Parse(time.RFC3339, "2026-10-05T07:23:28Z")
+	wantTime, err := time.Parse(time.RFC3339, "2026-10-07T22:21:39Z")
 	if err != nil {
 		t.Fatalf("parsing expected time: %v", err)
 	}
@@ -123,6 +123,28 @@ func TestBuildPointsSkipsUnnamedMetrics(t *testing.T) {
 	}
 	if len(points) != 1 {
 		t.Errorf("len(points) = %d, want 1", len(points))
+	}
+}
+
+func TestBuildPointsSkipsObjectAndArrayValuedMetrics(t *testing.T) {
+	body := []byte(`{"metrics": [
+		{"name": "io.systemd.Basic.LoadAverage1Min", "value": 0.1},
+		{"name": "io.systemd.Journal.HighPriorityMessage", "object": "kernel", "value": {"MESSAGE": "oops"}},
+		{"name": "some.array.valued.metric", "value": [1, 2, 3]}
+	]}`)
+
+	reportsDir := t.TempDir()
+	reportPath := writeCompressedReport(t, reportsDir, "host", body)
+
+	_, points, err := buildPoints(reportPath, nil)
+	if err != nil {
+		t.Fatalf("buildPoints: %v", err)
+	}
+	if len(points) != 1 {
+		t.Fatalf("len(points) = %d, want 1", len(points))
+	}
+	if points[0].Name() != "io.systemd.Basic.LoadAverage1Min" {
+		t.Errorf("surviving metric = %q, want %q", points[0].Name(), "io.systemd.Basic.LoadAverage1Min")
 	}
 }
 
