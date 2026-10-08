@@ -1121,9 +1121,28 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
-          "unit": "bytes"
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -1140,7 +1159,7 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "free = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.DiskSpace.FreeBytes\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> keep(columns: [\"object\", \"source\", \"fileSystemType\", \"_value\"])\n  |> rename(columns: {_value: \"free_bytes\"})\n\nsize = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.DiskSpace.SizeBytes\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> rename(columns: {_value: \"size_bytes\"})\n\njoin(tables: {free: free, size: size}, on: [\"object\"])\n  |> map(fn: (r) => ({ _time: now(), _field: r.object + \" (\" + r.fileSystemType + \", \" + r.source + \")\", _value: r.size_bytes - r.free_bytes }))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")",
+          "query": "free = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.DiskSpace.FreeBytes\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> keep(columns: [\"object\", \"source\", \"fileSystemType\", \"_value\"])\n  |> rename(columns: {_value: \"free_bytes\"})\n\nsize = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.DiskSpace.SizeBytes\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> rename(columns: {_value: \"size_bytes\"})\n\njoin(tables: {free: free, size: size}, on: [\"object\"])\n  |> map(fn: (r) => ({ _time: now(), _field: r.object + \" (\" + r.fileSystemType + \", \" + r.source + \")\", _value: 100.0 * float(v: r.size_bytes - r.free_bytes) / float(v: r.size_bytes) }))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")",
           "refId": "A"
         }
       ],
