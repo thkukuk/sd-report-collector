@@ -1,0 +1,18 @@
+[Unit]
+Description=Upload systemd reports
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment="REPORT_SERVER=localhost"
+Environment="REPORT_CERT=/etc/sd-report-collector/clients/%H.pem"
+Environment="REPORT_KEY=/etc/sd-report-collector/clients/%H.key"
+Environment="REPORT_TRUST=/etc/sd-report-collector/ca.pem"
+# Load admin overrides.
+EnvironmentFile=-/etc/default/sd-report-collector
+ExecStart=/usr/lib/systemd/systemd-report upload \
+	--url=https://${REPORT_SERVER}:8443/report \
+	--cert=${REPORT_CERT} \
+	--key=${REPORT_KEY} \
+	--trust=${REPORT_TRUST}
