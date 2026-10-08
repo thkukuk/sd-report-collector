@@ -487,6 +487,10 @@
                 "unknown": {
                   "text": "Unknown",
                   "color": "red"
+                },
+                "disabled": {
+                  "text": "Disabled",
+                  "color": "red"
                 }
               }
             }
@@ -505,7 +509,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
+        "w": 8,
         "x": 0,
         "y": 6
       },
@@ -516,7 +520,7 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.rebootmgr.RebootStatus\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> drop(columns: [\"_time\"])",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"${host}\" and r._field == \"value\" and (r._measurement == \"org.openSUSE.rebootmgr.RebootStatus\" or r._measurement == \"org.openSUSE.rebootmgr.RebootDisabled\"))\n  |> last()\n  |> pivot(rowKey: [\"_start\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({_value: if r[\"org.openSUSE.rebootmgr.RebootDisabled\"] == \"true\" then \"disabled\" else r[\"org.openSUSE.rebootmgr.RebootStatus\"]}))\n  |> keep(columns: [\"_value\"])",
           "refId": "A"
         }
       ],
@@ -561,8 +565,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
+        "w": 8,
+        "x": 8,
         "y": 6
       },
       "id": 102,
@@ -617,8 +621,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 12,
+        "w": 8,
+        "x": 16,
         "y": 6
       },
       "id": 103,
@@ -659,21 +663,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "true": {
-                  "text": "Disabled",
-                  "color": "red"
-                },
-                "false": {
-                  "text": "Enabled",
-                  "color": "green"
-                }
-              }
-            }
-          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -687,23 +676,23 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 6
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 10
       },
-      "id": 104,
+      "id": 105,
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.rebootmgr.RebootDisabled\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> drop(columns: [\"_time\"])",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"${host}\" and r._field == \"value\" and (r._measurement == \"org.openSUSE.rebootmgr.MaintenanceWindowStart\" or r._measurement == \"org.openSUSE.rebootmgr.MaintenanceWindowDuration\"))\n  |> last()\n  |> pivot(rowKey: [\"_start\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n  |> map(fn: (r) => {\n      totalSec = int(v: r[\"org.openSUSE.rebootmgr.MaintenanceWindowDuration\"])\n      h = totalSec / 3600\n      m = (totalSec % 3600) / 60\n      s = totalSec % 60\n      hs = if h < 10 then \"0\" + string(v: h) else string(v: h)\n      ms = if m < 10 then \"0\" + string(v: m) else string(v: m)\n      ss = if s < 10 then \"0\" + string(v: s) else string(v: s)\n      return {_value: r[\"org.openSUSE.rebootmgr.MaintenanceWindowStart\"] + \" (+\" + hs + \":\" + ms + \":\" + ss + \")\"}\n    })\n  |> keep(columns: [\"_value\"])",
           "refId": "A"
         }
       ],
-      "title": "Reboots Disabled",
+      "title": "Maintenance Window",
       "type": "stat",
       "options": {
         "colorMode": "value",
@@ -728,33 +717,108 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           }
         },
         "overrides": []
       },
       "gridPos": {
         "h": 6,
-        "w": 24,
-        "x": 0,
+        "w": 8,
+        "x": 8,
         "y": 10
       },
-      "id": 105,
+      "id": 106,
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"${host}\" and r._field == \"value\" and (\n       r._measurement == \"org.openSUSE.rebootmgr.RebootRequestTime\" or\n       r._measurement == \"org.openSUSE.rebootmgr.RebootScheduledTime\" or\n       r._measurement == \"org.openSUSE.rebootmgr.MaintenanceWindowStart\" or\n       r._measurement == \"org.openSUSE.rebootmgr.MaintenanceWindowDuration\" or\n       r._measurement == \"org.openSUSE.rebootmgr.Version\"\n     ))\n  |> last()\n  |> map(fn: (r) => ({r with _value: string(v: r._value)}))\n  |> group()\n  |> keep(columns: [\"_measurement\", \"_value\"])\n  |> rename(columns: {_measurement: \"metric\", _value: \"value\"})",
+          "query": "import \"date\"\n\nfrom(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"${host}\" and r._field == \"value\" and (r._measurement == \"org.openSUSE.rebootmgr.RebootScheduledTime\" or r._measurement == \"org.openSUSE.rebootmgr.RebootStatus\" or r._measurement == \"org.openSUSE.rebootmgr.RebootDisabled\"))\n  |> last()\n  |> pivot(rowKey: [\"_start\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({_value: if r[\"org.openSUSE.rebootmgr.RebootDisabled\"] == \"true\" or r[\"org.openSUSE.rebootmgr.RebootStatus\"] == \"not-requested\" then \"N/A\" else string(v: date.truncate(t: time(v: int(v: r[\"org.openSUSE.rebootmgr.RebootScheduledTime\"]) * 1000), unit: 1s))}))\n  |> keep(columns: [\"_value\"])",
           "refId": "A"
         }
       ],
-      "title": "Reboot Schedule & Maintenance Window",
-      "type": "table",
+      "title": "Reboot Scheduled Time",
+      "type": "stat",
       "options": {
-        "showHeader": true,
-        "cellHeight": "sm"
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 10
+      },
+      "id": 107,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "import \"date\"\n\nfrom(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"${host}\" and r._field == \"value\" and (r._measurement == \"org.openSUSE.rebootmgr.RebootRequestTime\" or r._measurement == \"org.openSUSE.rebootmgr.RebootStatus\" or r._measurement == \"org.openSUSE.rebootmgr.RebootDisabled\"))\n  |> last()\n  |> pivot(rowKey: [\"_start\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({_value: if r[\"org.openSUSE.rebootmgr.RebootDisabled\"] == \"true\" or r[\"org.openSUSE.rebootmgr.RebootStatus\"] == \"not-requested\" then \"N/A\" else string(v: date.truncate(t: time(v: int(v: r[\"org.openSUSE.rebootmgr.RebootRequestTime\"]) * 1000), unit: 1s))}))\n  |> keep(columns: [\"_value\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Reboot Request Time",
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "textMode": "auto"
       }
     },
     {
