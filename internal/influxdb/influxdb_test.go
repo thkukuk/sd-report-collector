@@ -30,6 +30,41 @@ func writeCompressedReport(t *testing.T, dir, hostname string, body []byte) stri
 	return path
 }
 
+func writeUncompressedReport(t *testing.T, dir, hostname string, body []byte) string {
+	t.Helper()
+
+	hostDir := filepath.Join(dir, hostname)
+	if err := os.MkdirAll(hostDir, 0o755); err != nil {
+		t.Fatalf("creating host dir: %v", err)
+	}
+	path := filepath.Join(hostDir, hostname+"-20261005T072328Z.json")
+	if err := os.WriteFile(path, body, 0o644); err != nil {
+		t.Fatalf("writing fixture report: %v", err)
+	}
+	return path
+}
+
+func TestBuildPointsFromUncompressedReport(t *testing.T) {
+	body, err := os.ReadFile("../../test-data/report.json")
+	if err != nil {
+		t.Fatalf("reading fixture report: %v", err)
+	}
+
+	reportsDir := t.TempDir()
+	reportPath := writeUncompressedReport(t, reportsDir, "plainhost", body)
+
+	hostname, points, err := buildPoints(reportPath, nil)
+	if err != nil {
+		t.Fatalf("buildPoints: %v", err)
+	}
+	if hostname != "plainhost" {
+		t.Errorf("hostname = %q, want %q", hostname, "plainhost")
+	}
+	if len(points) != 3739 {
+		t.Errorf("len(points) = %d, want 3739", len(points))
+	}
+}
+
 func TestBuildPointsFromFixtureReport(t *testing.T) {
 	body, err := os.ReadFile("../../test-data/report.json")
 	if err != nil {

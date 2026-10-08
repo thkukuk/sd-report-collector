@@ -4,6 +4,7 @@
 package influxdb
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -37,8 +38,8 @@ type reportMetric struct {
 	Value  interface{}       `json:"value"`
 }
 
-// Generate renders reportPath (the full path to a saved, zstd-compressed
-// systemd-report, as passed to every sd-report-collector plugin) into
+// Generate renders reportPath (the full path to a saved systemd-report, as
+// passed to every sd-report-collector plugin, zstd-compressed or not) into
 // InfluxDB points and writes them to cfg's server, tagged with the report's
 // hostname (taken from reportPath's parent directory, matching how
 // internal/store lays out saved reports). It returns the hostname and the
@@ -157,7 +158,15 @@ func metricPoint(m reportMetric, hostname string, timestamp time.Time) *write.Po
 	return influxdb2.NewPoint(m.Name, tags, fields, timestamp)
 }
 
+// zstdMagic is the 4-byte magic number at the start of every zstd frame
+// (RFC 8878), used to tell a compressed report apart from one passed in
+// uncompressed, e.g. when this plugin is invoked manually on a raw report.
+var zstdMagic = []byte{0x28, 0xB5, 0x2F, 0xFD}
+
 func decompress(data []byte) ([]byte, error) {
+	if !bytes.HasPrefix(data, zstdMagic) {
+		return data, nil
+	}
 	dec, err := zstd.NewReader(nil)
 	if err != nil {
 		return nil, err
