@@ -6,7 +6,6 @@ Wants=systemd-report-basic.socket systemd-report-cgroup.socket systemd-report-di
 Wants=systemd-journalctl-metrics.socket
 # imds and networkd are not used by default, avoid errors in the log
 #Wants=systemd-imds-metrics.socket systemd-networkd-varlink-metrics.socket
-Wants=rebootmgr.socket
 Requires=systemd-report.socket
 
 [Timer]
