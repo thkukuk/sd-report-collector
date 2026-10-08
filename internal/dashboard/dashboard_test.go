@@ -56,8 +56,8 @@ func TestGenerateWritesDashboardNamedAfterHostname(t *testing.T) {
 	if outPath != wantPath {
 		t.Errorf("outPath = %q, want %q", outPath, wantPath)
 	}
-	if metrics != 3232 {
-		t.Errorf("metrics = %d, want 3232", metrics)
+	if metrics != 3749 {
+		t.Errorf("metrics = %d, want 3749", metrics)
 	}
 
 	html, err := os.ReadFile(outPath)

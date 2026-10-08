@@ -256,10 +256,16 @@
         <th data-key="errno">Errno</th>
         <th data-key="activeSince">Active since</th>
         <th data-key="stateChanged">State changed</th>
+        <th class="num" data-key="cpuUsageNs">CPU</th>
+        <th class="num" data-key="memUsageBytes">Memory</th>
+        <th class="num" data-key="tasksCurrent">Tasks</th>
+        <th class="num" data-key="ioReadBytes">IO read</th>
       </tr></thead>
       <tbody id="units-tbody"></tbody>
     </table>
   </div>
+
+  <div id="journal-section"></div>
 
   <footer id="footer"></footer>
 </div>
@@ -505,6 +511,8 @@ function kv(container, label, val, title) {
     kv(c, 'Method', value1('org.openSUSE.rebootmgr.RebootMethod'), desc('org.openSUSE.rebootmgr.RebootMethod'));
     const scheduled = value1('org.openSUSE.rebootmgr.RebootScheduledTime');
     if (scheduled) kv(c, 'Scheduled for', `${fmtAbsoluteUs(scheduled)} (${fmtRelativeUs(scheduled)})`, desc('org.openSUSE.rebootmgr.RebootScheduledTime'));
+    const requested = value1('org.openSUSE.rebootmgr.RebootRequestTime');
+    if (requested) kv(c, 'Requested at', `${fmtAbsoluteUs(requested)} (${fmtAgoUs(requested)})`, desc('org.openSUSE.rebootmgr.RebootRequestTime'));
     kv(c, 'Strategy', value1('org.openSUSE.rebootmgr.RebootStrategy'));
     kv(c, 'Disabled', value1('org.openSUSE.rebootmgr.RebootDisabled'));
     const winStart = value1('org.openSUSE.rebootmgr.MaintenanceWindowStart');
@@ -714,6 +722,8 @@ const UNITS = (function buildUnits() {
     if (!map.has(name)) map.set(name, {
       name, loadState: null, activeState: null, nrestarts: null, errno: null,
       activeEnter: 0, activeExit: 0, stateChanged: 0, inactiveExit: 0,
+      cpuUsageNs: null, memUsageBytes: null, tasksCurrent: null,
+      ioReadBytes: null, ioReadOps: null,
     });
     return map.get(name);
   }
@@ -730,6 +740,15 @@ const UNITS = (function buildUnits() {
         if (m.fields && m.fields.event === 'enter') get(m.object).activeEnter = m.value;
         else if (m.fields && m.fields.event === 'exit') get(m.object).activeExit = m.value;
         break;
+      case 'io.systemd.CGroup.CpuUsage':
+        if (m.fields && m.fields.type === 'total') get(m.object).cpuUsageNs = m.value;
+        break;
+      case 'io.systemd.CGroup.MemoryUsage':
+        if (m.fields && m.fields.type === 'current') get(m.object).memUsageBytes = m.value;
+        break;
+      case 'io.systemd.CGroup.TasksCurrent': get(m.object).tasksCurrent = m.value; break;
+      case 'io.systemd.CGroup.IOReadBytes': get(m.object).ioReadBytes = m.value; break;
+      case 'io.systemd.CGroup.IOReadOperations': get(m.object).ioReadOps = m.value; break;
     }
   }
   const list = [];
@@ -876,6 +895,10 @@ function errnoLabel(n) {
         <td>${errnoLabel(u.errno)}</td>
         <td title="${u.activeEnter ? fmtAbsoluteUs(u.activeEnter) : ''}">${u.activeState === 'active' ? fmtAgoUs(u.activeEnter) : '—'}</td>
         <td title="${u.stateChanged ? fmtAbsoluteUs(u.stateChanged) : ''}">${fmtAgoUs(u.stateChanged)}</td>
+        <td class="num" title="${escapeHtml(desc('io.systemd.CGroup.CpuUsage'))}">${u.cpuUsageNs != null ? fmtDurationSeconds(u.cpuUsageNs / 1e9) : '—'}</td>
+        <td class="num" title="${escapeHtml(desc('io.systemd.CGroup.MemoryUsage'))}">${u.memUsageBytes != null ? fmtBytes(u.memUsageBytes) : '—'}</td>
+        <td class="num" title="${escapeHtml(desc('io.systemd.CGroup.TasksCurrent'))}">${u.tasksCurrent != null ? u.tasksCurrent : '—'}</td>
+        <td class="num" title="${escapeHtml((u.ioReadOps != null ? u.ioReadOps + ' operations · ' : '') + desc('io.systemd.CGroup.IOReadBytes'))}">${u.ioReadBytes != null ? fmtBytes(u.ioReadBytes) : '—'}</td>
       </tr>`).join('');
   }
 
@@ -892,6 +915,42 @@ function errnoLabel(n) {
     elm.addEventListener('input', render));
 
   render();
+})();
+
+/* ---------- journal ---------- */
+const JOURNAL_PRIORITY_NAMES = { 0: 'emerg', 1: 'alert', 2: 'crit', 3: 'err', 4: 'warning', 5: 'notice', 6: 'info', 7: 'debug' };
+function journalSeverity(p) {
+  const n = parseInt(p, 10);
+  if (isNaN(n)) return 'good';
+  if (n <= 2) return 'critical';
+  if (n === 3) return 'serious';
+  if (n === 4) return 'warning';
+  return 'good';
+}
+(function renderJournal() {
+  const entries = byName('io.systemd.Journal.HighPriorityMessage')
+    .map(m => ({ source: m.object, ...(m.value || {}) }))
+    .sort((a, b) => (b.__REALTIME_TIMESTAMP || 0) - (a.__REALTIME_TIMESTAMP || 0));
+  if (!entries.length) return;
+
+  const section = document.getElementById('journal-section');
+  section.appendChild(el('h2', { class: 'section-title', text: 'Journal' }));
+  const wrap = el('div', { class: 'table-wrap' });
+  const table = el('table');
+  table.innerHTML = `<thead><tr><th>Time</th><th>Priority</th><th>Source</th><th>Message</th></tr></thead>
+    <tbody>${entries.map(e => {
+      const prio = e.PRIORITY != null ? parseInt(e.PRIORITY, 10) : null;
+      const prioLabel = prio != null ? (JOURNAL_PRIORITY_NAMES[prio] || prio) : '—';
+      const source = e._SYSTEMD_UNIT || e.SYSLOG_IDENTIFIER || e.source || '—';
+      return `<tr>
+        <td class="mono" title="${escapeHtml(e.__REALTIME_TIMESTAMP ? fmtAbsoluteUs(+e.__REALTIME_TIMESTAMP) : '')}">${escapeHtml(e.__REALTIME_TIMESTAMP ? fmtAgoUs(+e.__REALTIME_TIMESTAMP) : '—')}</td>
+        <td>${prio != null ? `<span class="badge" style="background:${severityColor(journalSeverity(prio))}">${escapeHtml(prioLabel)}</span>` : '—'}</td>
+        <td class="unit-name">${escapeHtml(source)}</td>
+        <td>${escapeHtml(e.MESSAGE || '—')}</td>
+      </tr>`;
+    }).join('')}</tbody>`;
+  wrap.appendChild(table);
+  section.appendChild(wrap);
 })();
 
 /* ---------- footer ---------- */
