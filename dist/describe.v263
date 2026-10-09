@@ -134,6 +134,15 @@ io.systemd.Manager.UnitsTotal                                    gauge   Total n
 io.systemd.Manager.UserspaceTimestamp.Monotonic                  gauge   CLOCK_MONOTONIC microseconds at which userspace was reached
 io.systemd.Manager.UserspaceTimestamp.Realtime                   gauge   CLOCK_REALTIME microseconds at which userspace was reached
 io.systemd.Manager.Version                                       string  Version of systemd
+io.systemd.Network.Address                                       string  Per interface metric: configured IP address in CIDR notation
+io.systemd.Network.AddressState                                  string  Per interface metric: address state
+io.systemd.Network.AdministrativeState                           string  Per interface metric: administrative state
+io.systemd.Network.CarrierState                                  string  Per interface metric: carrier state
+io.systemd.Network.IPv4AddressState                              string  Per interface metric: IPv4 address state
+io.systemd.Network.IPv6AddressState                              string  Per interface metric: IPv6 address state
+io.systemd.Network.ManagedInterfaces                             gauge   Number of network interfaces managed by systemd-networkd
+io.systemd.Network.OperationalState                              string  Per interface metric: operational state
+io.systemd.Network.RequiredForOnline                             string  Per interface metric: required operational state for online, or 'no' if not required
 org.openSUSE.rebootmgr.MaintenanceWindowDuration                 gauge   Duration of the configured maintenance window in seconds
 org.openSUSE.rebootmgr.MaintenanceWindowStart                    string  Start of the configured maintenance window as calendar specification
 org.openSUSE.rebootmgr.RebootDisabled                            string  Whether reboots are temporarily disabled
@@ -144,4 +153,4 @@ org.openSUSE.rebootmgr.RebootStatus                              string  Whether
 org.openSUSE.rebootmgr.RebootStrategy                            string  Currently configured reboot strategy
 org.openSUSE.rebootmgr.Version                                   string  Version of rebootmgr
 
-144 metrics listed.
+153 metrics listed.
