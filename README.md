@@ -145,6 +145,8 @@ variable to match `[InfluxDB] Bucket` above (it defaults to
 `sd-report-collector`). The `host` variable then lists the hosts found in
 that bucket.
 
+![Example Grafana Dashboard](grafana-dashboard.png)
+
 ## Todo
 
 * Verify the report signature
