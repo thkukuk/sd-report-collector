@@ -9,8 +9,8 @@ require (
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
-	github.com/google/uuid v1.3.1 // indirect
-	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
-	github.com/oapi-codegen/runtime v1.0.0 // indirect
-	golang.org/x/net v0.23.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
+	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // indirect
+	github.com/oapi-codegen/runtime v1.7.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
 )
