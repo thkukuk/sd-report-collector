@@ -135,8 +135,9 @@ whole `io.systemd.Manager` family, covering per-unit timestamps and state
 noise most dashboards don't need); any other pattern must match a family
 name exactly.
 
-`dist/grafana-dashboard.json` is a ready-to-import Grafana dashboard built
-around that layout, covering the same ground as the HTML dashboard above:
+[grafana-systemd-report-dashboard.json](dist/grafana-systemd-report-dashboard.json)
+is a ready-to-import Grafana dashboard built around that layout, covering
+the same ground as the HTML dashboard above:
 system identity and reboot status, memory/swap/load/CPU/pressure over time,
 disk space and I/O, and unit counts by state, type, and load state. Import it
 via Grafana's "Import dashboard" screen, pick an InfluxDB datasource
