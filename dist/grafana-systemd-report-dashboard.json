@@ -576,7 +576,7 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.rebootmgr.RebootMethod\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> drop(columns: [\"_time\"])",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"${host}\" and r._field == \"value\" and (r._measurement == \"org.openSUSE.rebootmgr.RebootMethod\" or r._measurement == \"org.openSUSE.rebootmgr.RebootStatus\" or r._measurement == \"org.openSUSE.rebootmgr.RebootDisabled\"))\n  |> last()\n  |> pivot(rowKey: [\"_start\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({_value: if r[\"org.openSUSE.rebootmgr.RebootDisabled\"] == \"true\" or r[\"org.openSUSE.rebootmgr.RebootStatus\"] == \"not-requested\" then \"N/A\" else r[\"org.openSUSE.rebootmgr.RebootMethod\"]}))\n  |> keep(columns: [\"_value\"])",
           "refId": "A"
         }
       ],
@@ -622,8 +622,8 @@
       "gridPos": {
         "h": 3,
         "w": 8,
-        "x": 16,
-        "y": 6
+        "x": 8,
+        "y": 10
       },
       "id": 103,
       "targets": [
@@ -734,8 +734,8 @@
       "gridPos": {
         "h": 3,
         "w": 8,
-        "x": 8,
-        "y": 10
+        "x": 16,
+        "y": 6
       },
       "id": 106,
       "targets": [
@@ -1100,7 +1100,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 42
       },
       "id": 13,
       "panels": [],
@@ -1133,7 +1133,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 43
       },
       "id": 14,
       "targets": [
@@ -1142,7 +1142,7 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Basic.PressureAvg10\" and r._field == \"value\" and r.host == \"${host}\")",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Basic.PressureAvg10\" and r._field == \"value\" and r.host == \"${host}\")\n  |> map(fn: (r) => ({ r with _field: r.resource + \" (\" + r.type + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
           "refId": "A"
         }
       ],
@@ -1170,7 +1170,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 33
       },
       "id": 15,
       "panels": [],
@@ -1214,7 +1214,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 43
+        "y": 34
       },
       "id": 16,
       "targets": [
@@ -1268,7 +1268,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 43
+        "y": 34
       },
       "id": 17,
       "targets": [
@@ -1277,7 +1277,7 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Basic.DiskReadBytes\" and r._field == \"value\" and r.host == \"${host}\")\n  |> derivative(unit: 1s, nonNegative: true)",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Basic.DiskReadBytes\" and r._field == \"value\" and r.host == \"${host}\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> map(fn: (r) => ({ r with _field: \"Read (\" + r.object + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
           "refId": "A"
         },
         {
@@ -1285,7 +1285,7 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Basic.DiskWriteBytes\" and r._field == \"value\" and r.host == \"${host}\")\n  |> derivative(unit: 1s, nonNegative: true)",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Basic.DiskWriteBytes\" and r._field == \"value\" and r.host == \"${host}\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> map(fn: (r) => ({ r with _field: \"Write (\" + r.object + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
           "refId": "B"
         }
       ],
