@@ -5,7 +5,9 @@ Wants=network-online.target
 Wants=systemd-report-basic.socket systemd-report-cgroup.socket systemd-report-diskspace.socket systemd-report-files.socket systemd-report-hwmon.socket
 Wants=systemd-journalctl-metrics.socket
 # imds and networkd are not used by default, avoid errors in the log
-#Wants=systemd-imds-metrics.socket systemd-networkd-varlink-metrics.socket
+#Wants=systemd-imds-metrics.socket
+# systemd-networkd-varlink-metrics.socket get's enabled if you enable networkd
+#Wants=systemd-networkd-varlink-metrics.socket
 Requires=systemd-report.socket
 
 [Timer]

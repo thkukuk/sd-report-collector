@@ -16,16 +16,6 @@ source_root = meson.project_source_root()
 
 vendor_libdir = get_option('vendor_libdir')
 
-unitdir = get_option('unitdir')
-if unitdir == ''
-  systemd = dependency('systemd', required: false)
-  if systemd.found()
-    unitdir = systemd.get_variable(pkgconfig: 'systemdsystemunitdir')
-  else
-    unitdir = get_option('prefix') / 'lib' / 'systemd' / 'system'
-  endif
-endif
-
 go_env = environment()
 go_env.set('GOFLAGS', '')
 

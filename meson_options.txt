@@ -1,4 +1,2 @@
 option('vendor_libdir', type: 'string', value: 'lib/sd-report-collector',
        description: 'Install location (relative to prefix) for private binaries and data files')
-option('unitdir', type: 'string', value: '',
-       description: 'systemd system unit directory (auto-detected via pkg-config if empty)')
