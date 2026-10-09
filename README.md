@@ -18,6 +18,8 @@ meson test -C build
 
 ## Quickstart
 
+### Server
+
 Generate the CA, server cert, and a client cert under /etc/sd-report-collector and start the service:
 
 ```sh
@@ -27,9 +29,25 @@ sd-report-certs client myhost.example.com
 systemctl start sd-report-collector.service
 ```
 
-On the client call `systemd-report`:
+### Client
+
+Call `systemd-report` manual:
+
 ```sh
 /usr/lib/systemd/systemd-report upload --url=https://<server>:8443/report --cert=/etc/sd-report-collector/clients/myhost.pem --key=/etc/sd-report-collector/clients/myhost.key --trust=/etc/sd-report-collector/ca.pem
+```
+
+Or use the provided timer and service file to run `systemd-report` regular.
+The steps on the client:
+
+```sh
+mkdir -p /etc/sd-report-collector/clients/
+
+cp myhost.example.com.{key,pem} /etc/sd-report-collector/clients/
+cp ca.pem /etc/sd-report-collector
+
+echo "REPORT_SERVER=<server hostname>" > /etc/default/sd-report-collector
+systemctl enable --now sd-report-collector-node.timer
 ```
 
 ## Configuration
