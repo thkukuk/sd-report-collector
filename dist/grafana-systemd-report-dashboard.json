@@ -126,7 +126,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 4,
         "x": 0,
         "y": 1
@@ -182,7 +182,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 4,
         "x": 4,
         "y": 1
@@ -242,7 +242,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 4,
         "x": 8,
         "y": 1
@@ -298,7 +298,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 4,
         "x": 12,
         "y": 1
@@ -355,7 +355,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 4,
         "x": 16,
         "y": 1
@@ -412,7 +412,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 4,
         "x": 20,
         "y": 1
@@ -455,7 +455,7 @@
       },
       "id": 100,
       "panels": [],
-      "title": "Reboot Status",
+      "title": "Reboot Manager Status",
       "type": "row"
     },
     {
@@ -508,7 +508,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 8,
         "x": 0,
         "y": 6
@@ -564,7 +564,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 8,
         "x": 8,
         "y": 6
@@ -620,7 +620,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 8,
         "x": 16,
         "y": 6
@@ -676,7 +676,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 3,
         "w": 8,
         "x": 0,
         "y": 10
@@ -732,7 +732,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 3,
         "w": 8,
         "x": 8,
         "y": 10
@@ -788,7 +788,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 3,
         "w": 8,
         "x": 16,
         "y": 10
