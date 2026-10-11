@@ -399,7 +399,7 @@ function fillMeter(container, pct, sev, labelName, statText, subText, title) {
   const prettyHost = pick('io.systemd.Basic.MachineInfo.PRETTY_HOSTNAME', {});
   document.getElementById('hdr-host').textContent = prettyHost ? `${prettyHost} (${hostname})` : hostname;
   const osName = value1('io.systemd.Basic.OSRelease.NAME') || '';
-  const osVer = value1('io.systemd.Basic.OSRelease.VERSION_ID') || '';
+  const osVer = value1('io.systemd.Basic.OSRelease.VERSION') || value1('io.systemd.Basic.OSRelease.VERSION_ID') || '';
   const kernel = value1('io.systemd.Basic.KernelVersion') || '';
   const arch = value1('io.systemd.Basic.Architecture') || '';
   document.getElementById('hdr-os').textContent = [osName, osVer, kernel && `kernel ${kernel}`, arch].filter(Boolean).join(' · ');
