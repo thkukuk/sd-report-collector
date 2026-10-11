@@ -135,8 +135,8 @@
     color: var(--text-muted); font-weight: 600;
   }
   .kv { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: 13px; }
-  .kv .k { color: var(--text-secondary); }
-  .kv .v { font-weight: 500; text-align: right; }
+  .kv .k { color: var(--text-secondary); flex-shrink: 0; }
+  .kv .v { font-weight: 500; text-align: right; overflow-wrap: anywhere; min-width: 0; }
   .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
   .meter-row { margin: 10px 0; }
