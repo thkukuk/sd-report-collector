@@ -143,6 +143,20 @@ io.systemd.Network.IPv6AddressState                              string  Per int
 io.systemd.Network.ManagedInterfaces                             gauge   Number of network interfaces managed by systemd-networkd
 io.systemd.Network.OperationalState                              string  Per interface metric: operational state
 io.systemd.Network.RequiredForOnline                             string  Per interface metric: required operational state for online, or 'no' if not required
+io.systemd.NetworkStatistics.CarrierChanges                      counter Per interface metric: number of times the carrier state changed (object=interface name, ifindex=interface index, type=interface type, kind=interface kind)
+io.systemd.NetworkStatistics.Collisions                          counter Per interface metric: number of collisions during packet transmission
+io.systemd.NetworkStatistics.MTU                                 gauge   Per interface metric: maximum transmission unit in bytes
+io.systemd.NetworkStatistics.ReceiveBytes                        counter Per interface metric: number of bytes received
+io.systemd.NetworkStatistics.ReceiveDropped                      counter Per interface metric: number of received packets dropped without error
+io.systemd.NetworkStatistics.ReceiveErrors                       counter Per interface metric: number of receive errors
+io.systemd.NetworkStatistics.ReceiveMulticastPackets             counter Per interface metric: number of multicast packets received
+io.systemd.NetworkStatistics.ReceivePackets                      counter Per interface metric: number of packets received
+io.systemd.NetworkStatistics.SpeedBitsPerSecond                  gauge   Per interface metric: link speed in bits per second, if known
+io.systemd.NetworkStatistics.TransmitBytes                       counter Per interface metric: number of bytes transmitted
+io.systemd.NetworkStatistics.TransmitDropped                     counter Per interface metric: number of packets dropped on transmission without error
+io.systemd.NetworkStatistics.TransmitErrors                      counter Per interface metric: number of transmit errors
+io.systemd.NetworkStatistics.TransmitPackets                     counter Per interface metric: number of packets transmitted
+io.systemd.NetworkStatistics.TransmitQueueLength                 gauge   Per interface metric: transmit queue length in packets
 org.openSUSE.rebootmgr.MaintenanceWindowDuration                 gauge   Duration of the configured maintenance window in seconds
 org.openSUSE.rebootmgr.MaintenanceWindowStart                    string  Start of the configured maintenance window as calendar specification
 org.openSUSE.rebootmgr.RebootDisabled                            string  Whether reboots are temporarily disabled
@@ -153,4 +167,4 @@ org.openSUSE.rebootmgr.RebootStatus                              string  Whether
 org.openSUSE.rebootmgr.RebootStrategy                            string  Currently configured reboot strategy
 org.openSUSE.rebootmgr.Version                                   string  Version of rebootmgr
 
-153 metrics listed.
+167 metrics listed.

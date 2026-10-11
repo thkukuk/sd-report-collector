@@ -8,8 +8,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -32,10 +34,10 @@ type reportDoc struct {
 // ...), optional label fields, and its value (a JSON number, string, or
 // bool).
 type reportMetric struct {
-	Name   string            `json:"name"`
-	Object string            `json:"object,omitempty"`
-	Fields map[string]string `json:"fields,omitempty"`
-	Value  interface{}       `json:"value"`
+	Name   string                 `json:"name"`
+	Object string                 `json:"object,omitempty"`
+	Fields map[string]interface{} `json:"fields,omitempty"`
+	Value  interface{}            `json:"value"`
 }
 
 // Generate renders reportPath (the full path to a saved systemd-report, as
@@ -151,11 +153,29 @@ func metricPoint(m reportMetric, hostname string, timestamp time.Time) *write.Po
 		tags["object"] = m.Object
 	}
 	for k, v := range m.Fields {
-		tags[k] = v
+		tags[k] = fieldTagValue(v)
 	}
 
 	fields := map[string]interface{}{"value": m.Value}
 	return influxdb2.NewPoint(m.Name, tags, fields, timestamp)
+}
+
+// fieldTagValue renders a metric's "fields" entry (decoded from JSON, so a
+// string, bool, or float64) as the string InfluxDB tags require. JSON numbers
+// that are whole, like an interface's "ifindex", are rendered without a
+// trailing ".0".
+func fieldTagValue(v interface{}) string {
+	switch val := v.(type) {
+	case string:
+		return val
+	case float64:
+		if val == math.Trunc(val) {
+			return strconv.FormatInt(int64(val), 10)
+		}
+		return strconv.FormatFloat(val, 'g', -1, 64)
+	default:
+		return fmt.Sprint(val)
+	}
 }
 
 // zstdMagic is the 4-byte magic number at the start of every zstd frame

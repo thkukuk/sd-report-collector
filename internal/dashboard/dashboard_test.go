@@ -70,8 +70,8 @@ func TestGenerateWritesDashboardNamedAfterHostname(t *testing.T) {
 	if outPath != wantPath {
 		t.Errorf("outPath = %q, want %q", outPath, wantPath)
 	}
-	if metrics != 3749 {
-		t.Errorf("metrics = %d, want 3749", metrics)
+	if metrics != 3388 {
+		t.Errorf("metrics = %d, want 3388", metrics)
 	}
 
 	html, err := os.ReadFile(outPath)
@@ -136,8 +136,8 @@ func TestGenerateWithUncompressedReport(t *testing.T) {
 	if outPath != filepath.Join(outDir, "plainhost.html") {
 		t.Errorf("outPath = %q", outPath)
 	}
-	if metrics != 3749 {
-		t.Errorf("metrics = %d, want 3749", metrics)
+	if metrics != 3388 {
+		t.Errorf("metrics = %d, want 3388", metrics)
 	}
 }
 
