@@ -326,6 +326,14 @@ function fmtBytes(n) {
   const dec = i === 0 ? 0 : (v < 10 ? 2 : v < 100 ? 1 : 0);
   return v.toFixed(dec) + ' ' + units[i];
 }
+function fmtBitsPerSecond(n) {
+  if (n == null || isNaN(n)) return '—';
+  const units = ['bit/s','kbit/s','Mbit/s','Gbit/s','Tbit/s'];
+  let v = n, i = 0;
+  while (v >= 1000 && i < units.length - 1) { v /= 1000; i++; }
+  const dec = i === 0 ? 0 : (v < 10 ? 2 : v < 100 ? 1 : 0);
+  return v.toFixed(dec) + ' ' + units[i];
+}
 function fmtDurationSeconds(s) {
   if (s == null || isNaN(s)) return '—';
   const neg = s < 0;
@@ -711,6 +719,60 @@ function kv(container, label, val, title) {
       }
       grid.appendChild(c);
     }
+  }
+
+  // Network addresses
+  {
+    const addrs = byName('io.systemd.Network.Address');
+    if (addrs.length) {
+      const c = el('div', { class: 'card' });
+      c.appendChild(el('h3', { text: 'Network addresses' }));
+      const byIface = new Map();
+      for (const a of addrs) {
+        if (!byIface.has(a.object)) byIface.set(a.object, { ipv4: [], ipv6: [] });
+        const fam = a.fields && a.fields.family;
+        if (fam === 'ipv4') byIface.get(a.object).ipv4.push(a.value);
+        else if (fam === 'ipv6') byIface.get(a.object).ipv6.push(a.value);
+      }
+      [...byIface.keys()].sort().forEach(iface => {
+        const { ipv4, ipv6 } = byIface.get(iface);
+        c.appendChild(el('div', { style: 'font-weight:600;margin-top:10px;', text: iface }));
+        kv(c, 'IPv4', ipv4.join(', ') || '—', desc('io.systemd.Network.Address'));
+        kv(c, 'IPv6', ipv6.join(', ') || '—', desc('io.systemd.Network.Address'));
+      });
+      grid.appendChild(c);
+    }
+  }
+
+  // Network statistics, per interface (excluding loopback)
+  {
+    function netStat(name, iface) {
+      const m = METRICS.find(x => x.name === name && x.object === iface);
+      return m ? m.value : undefined;
+    }
+    const ifaces = [...new Set(byName('io.systemd.NetworkStatistics.MTU').map(m => m.object))]
+      .filter(i => i !== 'lo')
+      .sort();
+    ifaces.forEach(iface => {
+      const c = el('div', { class: 'card' });
+      c.appendChild(el('h3', { text: `Network: ${iface}` }));
+      kv(c, 'MTU', netStat('io.systemd.NetworkStatistics.MTU', iface), desc('io.systemd.NetworkStatistics.MTU'));
+      const speed = netStat('io.systemd.NetworkStatistics.SpeedBitsPerSecond', iface);
+      kv(c, 'Speed', speed != null ? fmtBitsPerSecond(speed) : null, desc('io.systemd.NetworkStatistics.SpeedBitsPerSecond'));
+      kv(c, 'Rx bytes', fmtBytes(netStat('io.systemd.NetworkStatistics.ReceiveBytes', iface)), desc('io.systemd.NetworkStatistics.ReceiveBytes'));
+      kv(c, 'Rx packets', netStat('io.systemd.NetworkStatistics.ReceivePackets', iface), desc('io.systemd.NetworkStatistics.ReceivePackets'));
+      kv(c, 'Rx multicast', netStat('io.systemd.NetworkStatistics.ReceiveMulticastPackets', iface), desc('io.systemd.NetworkStatistics.ReceiveMulticastPackets'));
+      kv(c, 'Rx errors', netStat('io.systemd.NetworkStatistics.ReceiveErrors', iface), desc('io.systemd.NetworkStatistics.ReceiveErrors'));
+      kv(c, 'Rx dropped', netStat('io.systemd.NetworkStatistics.ReceiveDropped', iface), desc('io.systemd.NetworkStatistics.ReceiveDropped'));
+      kv(c, 'Tx bytes', fmtBytes(netStat('io.systemd.NetworkStatistics.TransmitBytes', iface)), desc('io.systemd.NetworkStatistics.TransmitBytes'));
+      kv(c, 'Tx packets', netStat('io.systemd.NetworkStatistics.TransmitPackets', iface), desc('io.systemd.NetworkStatistics.TransmitPackets'));
+      kv(c, 'Tx errors', netStat('io.systemd.NetworkStatistics.TransmitErrors', iface), desc('io.systemd.NetworkStatistics.TransmitErrors'));
+      kv(c, 'Tx dropped', netStat('io.systemd.NetworkStatistics.TransmitDropped', iface), desc('io.systemd.NetworkStatistics.TransmitDropped'));
+      kv(c, 'Queue length', netStat('io.systemd.NetworkStatistics.TransmitQueueLength', iface), desc('io.systemd.NetworkStatistics.TransmitQueueLength'));
+      kv(c, 'Collisions', netStat('io.systemd.NetworkStatistics.Collisions', iface), desc('io.systemd.NetworkStatistics.Collisions'));
+      kv(c, 'Carrier changes', netStat('io.systemd.NetworkStatistics.CarrierChanges', iface), desc('io.systemd.NetworkStatistics.CarrierChanges'));
+      grid.appendChild(c);
+    });
   }
 
 })();
