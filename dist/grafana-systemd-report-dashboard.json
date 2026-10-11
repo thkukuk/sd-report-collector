@@ -1100,7 +1100,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 67
       },
       "id": 13,
       "panels": [],
@@ -1133,7 +1133,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 43
+        "y": 68
       },
       "id": 14,
       "targets": [
@@ -1313,7 +1313,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 76
       },
       "id": 18,
       "panels": [],
@@ -1346,7 +1346,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 52
+        "y": 77
       },
       "id": 19,
       "targets": [
@@ -1400,7 +1400,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 52
+        "y": 77
       },
       "id": 20,
       "targets": [
@@ -1454,7 +1454,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 52
+        "y": 77
       },
       "id": 21,
       "targets": [
@@ -1492,7 +1492,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 60
+        "y": 85
       },
       "id": 22,
       "panels": [],
@@ -1517,7 +1517,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 61
+        "y": 86
       },
       "id": 23,
       "targets": [
@@ -1555,7 +1555,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 61
+        "y": 86
       },
       "id": 24,
       "targets": [
@@ -1592,7 +1592,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 69
+        "y": 94
       },
       "id": 25,
       "targets": [
@@ -1629,7 +1629,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 69
+        "y": 94
       },
       "id": 26,
       "targets": [
@@ -1647,6 +1647,312 @@
       "options": {
         "showHeader": true,
         "cellHeight": "sm"
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "id": 200,
+      "panels": [],
+      "title": "Network",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 43
+      },
+      "id": 201,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Network.Address\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> keep(columns: [\"object\", \"family\", \"scope\", \"_value\"])\n  |> rename(columns: {object: \"interface\", _value: \"address\"})\n  |> sort(columns: [\"interface\", \"family\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Network Addresses",
+      "type": "table",
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 43
+      },
+      "id": 202,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "mtu = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.MTU\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> rename(columns: {_value: \"mtu\"})\n\nspeed = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.SpeedBitsPerSecond\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> rename(columns: {_value: \"speed_bps\"})\n\nqueueLength = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.TransmitQueueLength\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> rename(columns: {_value: \"queue_length\"})\n\ncollisions = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.Collisions\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> rename(columns: {_value: \"collisions\"})\n\ncarrierChanges = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.CarrierChanges\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> rename(columns: {_value: \"carrier_changes\"})\n\nj1 = join(tables: {mtu: mtu, speed: speed}, on: [\"object\"])\nj2 = join(tables: {j1: j1, queueLength: queueLength}, on: [\"object\"])\nj3 = join(tables: {j2: j2, collisions: collisions}, on: [\"object\"])\njoin(tables: {j3: j3, carrierChanges: carrierChanges}, on: [\"object\"])\n  |> rename(columns: {object: \"interface\"})\n  |> sort(columns: [\"interface\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Network Interface Info",
+      "type": "table",
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 51
+      },
+      "id": 203,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.ReceiveBytes\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> map(fn: (r) => ({ r with _field: \"Rx (\" + r.object + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.TransmitBytes\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> map(fn: (r) => ({ r with _field: \"Tx (\" + r.object + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+          "refId": "B"
+        }
+      ],
+      "title": "Network Throughput Rate",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "pps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 51
+      },
+      "id": 204,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.ReceivePackets\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> map(fn: (r) => ({ r with _field: \"Rx packets (\" + r.object + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.TransmitPackets\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> map(fn: (r) => ({ r with _field: \"Tx packets (\" + r.object + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.ReceiveMulticastPackets\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> map(fn: (r) => ({ r with _field: \"Rx multicast (\" + r.object + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+          "refId": "C"
+        }
+      ],
+      "title": "Network Packets Rate",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "cps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 59
+      },
+      "id": 205,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.ReceiveErrors\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> map(fn: (r) => ({ r with _field: \"Rx errors (\" + r.object + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.TransmitErrors\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> map(fn: (r) => ({ r with _field: \"Tx errors (\" + r.object + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.ReceiveDropped\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> map(fn: (r) => ({ r with _field: \"Rx dropped (\" + r.object + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.TransmitDropped\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> map(fn: (r) => ({ r with _field: \"Tx dropped (\" + r.object + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+          "refId": "D"
+        }
+      ],
+      "title": "Network Errors & Drops Rate",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       }
     }
   ],
