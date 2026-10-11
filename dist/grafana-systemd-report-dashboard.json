@@ -446,12 +446,124 @@
       }
     },
     {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 27,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"${host}\" and r._field == \"value\" and (r._measurement == \"io.systemd.Basic.OSRelease.NAME\" or r._measurement == \"io.systemd.Basic.OSRelease.VERSION\" or r._measurement == \"io.systemd.Basic.OSRelease.VERSION_ID\"))\n  |> last()\n  |> pivot(rowKey: [\"_start\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({_value: r[\"io.systemd.Basic.OSRelease.NAME\"] + \" \" + (if exists r[\"io.systemd.Basic.OSRelease.VERSION\"] then r[\"io.systemd.Basic.OSRelease.VERSION\"] else r[\"io.systemd.Basic.OSRelease.VERSION_ID\"])})\n  )\n  |> keep(columns: [\"_value\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Operating System",
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 28,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.Basic.KernelVersion\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "title": "Kernel Version",
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 5
+        "y": 8
       },
       "id": 100,
       "panels": [],
@@ -511,7 +623,7 @@
         "h": 3,
         "w": 8,
         "x": 0,
-        "y": 6
+        "y": 9
       },
       "id": 101,
       "targets": [
@@ -567,7 +679,7 @@
         "h": 3,
         "w": 8,
         "x": 8,
-        "y": 6
+        "y": 9
       },
       "id": 102,
       "targets": [
@@ -623,7 +735,7 @@
         "h": 3,
         "w": 8,
         "x": 8,
-        "y": 10
+        "y": 13
       },
       "id": 103,
       "targets": [
@@ -679,7 +791,7 @@
         "h": 3,
         "w": 8,
         "x": 0,
-        "y": 10
+        "y": 13
       },
       "id": 105,
       "targets": [
@@ -735,7 +847,7 @@
         "h": 3,
         "w": 8,
         "x": 16,
-        "y": 6
+        "y": 9
       },
       "id": 106,
       "targets": [
@@ -791,7 +903,7 @@
         "h": 3,
         "w": 8,
         "x": 16,
-        "y": 10
+        "y": 13
       },
       "id": 107,
       "targets": [
@@ -827,7 +939,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 19
       },
       "id": 8,
       "panels": [],
@@ -860,7 +972,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 17
+        "y": 20
       },
       "id": 9,
       "targets": [
@@ -925,7 +1037,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 17
+        "y": 20
       },
       "id": 10,
       "targets": [
@@ -990,7 +1102,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 25
+        "y": 28
       },
       "id": 11,
       "targets": [
@@ -1063,7 +1175,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 25
+        "y": 28
       },
       "id": 12,
       "targets": [
@@ -1100,7 +1212,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 67
+        "y": 70
       },
       "id": 13,
       "panels": [],
@@ -1133,7 +1245,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 71
       },
       "id": 14,
       "targets": [
@@ -1170,7 +1282,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 36
       },
       "id": 15,
       "panels": [],
@@ -1214,7 +1326,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 34
+        "y": 37
       },
       "id": 16,
       "targets": [
@@ -1268,7 +1380,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 34
+        "y": 37
       },
       "id": 17,
       "targets": [
@@ -1313,7 +1425,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 79
       },
       "id": 18,
       "panels": [],
@@ -1346,7 +1458,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 77
+        "y": 80
       },
       "id": 19,
       "targets": [
@@ -1400,7 +1512,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 77
+        "y": 80
       },
       "id": 20,
       "targets": [
@@ -1454,7 +1566,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 77
+        "y": 80
       },
       "id": 21,
       "targets": [
@@ -1492,7 +1604,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 85
+        "y": 88
       },
       "id": 22,
       "panels": [],
@@ -1517,7 +1629,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 86
+        "y": 89
       },
       "id": 23,
       "targets": [
@@ -1555,7 +1667,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 86
+        "y": 89
       },
       "id": 24,
       "targets": [
@@ -1592,7 +1704,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 94
+        "y": 97
       },
       "id": 25,
       "targets": [
@@ -1629,7 +1741,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 94
+        "y": 97
       },
       "id": 26,
       "targets": [
@@ -1655,7 +1767,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 45
       },
       "id": 200,
       "panels": [],
@@ -1679,7 +1791,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 43
+        "y": 46
       },
       "id": 201,
       "targets": [
@@ -1716,7 +1828,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 43
+        "y": 46
       },
       "id": 202,
       "targets": [
@@ -1762,7 +1874,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 51
+        "y": 54
       },
       "id": 203,
       "targets": [
@@ -1827,7 +1939,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 51
+        "y": 54
       },
       "id": 204,
       "targets": [
@@ -1900,7 +2012,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 59
+        "y": 62
       },
       "id": 205,
       "targets": [
@@ -2003,6 +2115,6 @@
   "timezone": "",
   "title": "systemd-report",
   "uid": "sd-report-collector",
-  "version": 2,
+  "version": 4,
   "weekStart": ""
 }
