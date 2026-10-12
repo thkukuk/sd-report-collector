@@ -48,6 +48,10 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 	}
 	slog.Info("Report saved", "hostname", hostname, "path", path)
 
+	if err := store.Prune(s.cfg.BaseDirectory, hostname, s.cfg.MaxReportsPerHost); err != nil {
+		slog.Warn("Failed to prune old reports", "hostname", hostname, "error", err)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})

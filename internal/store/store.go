@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -64,6 +65,54 @@ func Save(baseDir, hostname string, timestamp time.Time, reportID string, body [
 		return "", err
 	}
 	return path, nil
+}
+
+// Prune deletes the oldest "<hostname>-*.json.zst" report files in
+// "<baseDir>/<hostname>" until at most maxFiles remain. Filenames sort
+// lexically in timestamp order, so no stat calls are needed to find the
+// oldest ones. maxFiles <= 0 disables pruning.
+func Prune(baseDir, hostname string, maxFiles int64) error {
+	if maxFiles <= 0 {
+		return nil
+	}
+	hostname, err := sanitizeHostname(hostname)
+	if err != nil {
+		return err
+	}
+
+	dir := filepath.Join(baseDir, hostname)
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("reading %s: %w", dir, err)
+	}
+
+	prefix := hostname + "-"
+	var names []string
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if strings.HasPrefix(name, prefix) && strings.HasSuffix(name, ".json.zst") {
+			names = append(names, name)
+		}
+	}
+	if int64(len(names)) <= maxFiles {
+		return nil
+	}
+
+	sort.Strings(names)
+	excess := names[:int64(len(names))-maxFiles]
+	for _, name := range excess {
+		path := filepath.Join(dir, name)
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("removing %s: %w", path, err)
+		}
+	}
+	return nil
 }
 
 func compress(data []byte) ([]byte, error) {

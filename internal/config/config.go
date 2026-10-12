@@ -26,6 +26,7 @@ type Config struct {
 	ServerKeyFile         string
 	ClientCAFile          string
 	MaxReportSizeBytes    int64
+	MaxReportsPerHost     int64
 	PluginTimeoutSec      int64
 	LogLevel              string
 	Plugins               []Plugin
@@ -40,6 +41,7 @@ func defaults() Config {
 		ServerKeyFile:         "/etc/ssl/private/sd-report-collector.pem",
 		ClientCAFile:          "/etc/ssl/sd-report-collector/ca.pem",
 		MaxReportSizeBytes:    10 * 1024 * 1024,
+		MaxReportsPerHost:     2016, // 7 days at one report every 5 minutes
 		PluginTimeoutSec:      30,
 		LogLevel:              "info",
 	}
@@ -79,6 +81,9 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 	if cfg.MaxReportSizeBytes, err = kf.getInt("Server", "MaxReportSizeBytes", cfg.MaxReportSizeBytes); err != nil {
+		return nil, err
+	}
+	if cfg.MaxReportsPerHost, err = kf.getInt("Server", "MaxReportsPerHost", cfg.MaxReportsPerHost); err != nil {
 		return nil, err
 	}
 	if cfg.PluginTimeoutSec, err = kf.getInt("Server", "PluginTimeoutSec", cfg.PluginTimeoutSec); err != nil {
