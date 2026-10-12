@@ -137,6 +137,8 @@
   .kv { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: 13px; }
   .kv .k { color: var(--text-secondary); flex-shrink: 0; }
   .kv .v { font-weight: 500; text-align: right; overflow-wrap: anywhere; min-width: 0; }
+  .addr-fam { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+  .addr-line { font-size: 13px; font-weight: 500; padding: 1px 0; overflow-wrap: anywhere; }
   .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
   .meter-row { margin: 10px 0; }
@@ -737,8 +739,13 @@ function kv(container, label, val, title) {
       [...byIface.keys()].sort().forEach(iface => {
         const { ipv4, ipv6 } = byIface.get(iface);
         c.appendChild(el('div', { style: 'font-weight:600;margin-top:10px;', text: iface }));
-        kv(c, 'IPv4', ipv4.join(', ') || '—', desc('io.systemd.Network.Address'));
-        kv(c, 'IPv6', ipv6.join(', ') || '—', desc('io.systemd.Network.Address'));
+        [['IPv4', ipv4], ['IPv6', ipv6]].forEach(([label, list]) => {
+          if (!list.length) return;
+          c.appendChild(el('div', { class: 'addr-fam', title: desc('io.systemd.Network.Address'), text: label }));
+          list.forEach(addr => {
+            c.appendChild(el('div', { class: 'addr-line', title: desc('io.systemd.Network.Address'), text: addr }));
+          });
+        });
       });
       grid.appendChild(c);
     }
