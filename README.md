@@ -105,7 +105,7 @@ built-in template and omits per-metric type/description annotations,
 respectively. `DescribeFile` should point at the output of
 `systemd-report describe`.
 
-![Example Dashboard](localhost.html.png)
+![Example Dashboard](screenshot.html.png)
 
 ## InfluxDB plugin and Grafana dashboard
 
