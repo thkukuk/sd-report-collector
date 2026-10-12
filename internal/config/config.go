@@ -22,6 +22,7 @@ type Config struct {
 	ListenAddress         string
 	ListenPath            string
 	BaseDirectory         string
+	QuarantineDirectory   string
 	ServerCertificateFile string
 	ServerKeyFile         string
 	ClientCAFile          string
@@ -37,6 +38,7 @@ func defaults() Config {
 		ListenAddress:         "0.0.0.0:8443",
 		ListenPath:            "/report",
 		BaseDirectory:         "/var/lib/sd-report-collector/reports",
+		QuarantineDirectory:   "/var/lib/sd-report-collector/quarantine",
 		ServerCertificateFile: "/etc/ssl/certs/sd-report-collector.pem",
 		ServerKeyFile:         "/etc/ssl/private/sd-report-collector.pem",
 		ClientCAFile:          "/etc/ssl/sd-report-collector/ca.pem",
@@ -69,6 +71,9 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 	if cfg.BaseDirectory, err = kf.getString("Server", "BaseDirectory", cfg.BaseDirectory); err != nil {
+		return nil, err
+	}
+	if cfg.QuarantineDirectory, err = kf.getString("Server", "QuarantineDirectory", cfg.QuarantineDirectory); err != nil {
 		return nil, err
 	}
 	if cfg.ServerCertificateFile, err = kf.getString("Server", "ServerCertificateFile", cfg.ServerCertificateFile); err != nil {

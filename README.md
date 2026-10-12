@@ -171,5 +171,7 @@ that bucket.
 ## Todo
 
 * Verify the report signature
-  * by the collector before writing to disk
+  * ~~by the collector before writing to disk~~ (done: signed reports that
+    fail verification are logged as a critical error and saved under
+    `QuarantineDirectory` instead of the normal per-host store)
   * by the plugin and add result to html output

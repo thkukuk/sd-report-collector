@@ -17,6 +17,17 @@ import (
 	"sd-report-collector/internal/server"
 )
 
+// replaceLevelAttr renders config.LevelCritical as "CRITICAL" instead of
+// slog's default "ERROR+4", so quarantined-report log lines stand out.
+func replaceLevelAttr(groups []string, a slog.Attr) slog.Attr {
+	if a.Key == slog.LevelKey {
+		if lvl, ok := a.Value.Any().(slog.Level); ok && lvl == config.LevelCritical {
+			a.Value = slog.StringValue("CRITICAL")
+		}
+	}
+	return a
+}
+
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -29,7 +40,10 @@ func main() {
 		slog.Error("Invalid LogLevel", "value", cfg.LogLevel, "error", err)
 		os.Exit(1)
 	}
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})))
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level:       level,
+		ReplaceAttr: replaceLevelAttr,
+	})))
 
 	srv, err := server.New(cfg)
 	if err != nil {

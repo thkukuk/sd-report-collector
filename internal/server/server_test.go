@@ -200,3 +200,107 @@ func TestHandleReportEndToEnd(t *testing.T) {
 		t.Errorf("plugin log = %q, want to contain %q", logContent, wantPath)
 	}
 }
+
+// TestHandleReportQuarantinesTamperedSignedReport exercises the same stack
+// as TestHandleReportEndToEnd, but POSTs a signed report whose bytes have
+// been altered after signing. It must land in QuarantineDirectory instead
+// of BaseDirectory, and must not reach the plugin.
+func TestHandleReportQuarantinesTamperedSignedReport(t *testing.T) {
+	dir := t.TempDir()
+	ca, caKey, caPEM := generateCA(t)
+	serverPEM := issueCert(t, ca, caKey, "localhost", 2)
+	clientPEM := issueCert(t, ca, caKey, "myhost.example.com", 3)
+
+	writeFile(t, filepath.Join(dir, "ca.pem"), caPEM.cert)
+	writeFile(t, filepath.Join(dir, "server.pem"), serverPEM.cert)
+	writeFile(t, filepath.Join(dir, "server.key"), serverPEM.key)
+
+	baseDir := filepath.Join(dir, "reports")
+	quarantineDir := filepath.Join(dir, "quarantine")
+	pluginLog := filepath.Join(dir, "plugin.log")
+	pluginScript := filepath.Join(dir, "plugin.sh")
+	writeFile(t, pluginScript, []byte("#!/bin/sh\necho \"$1\" >> "+pluginLog+"\n"))
+	if err := os.Chmod(pluginScript, 0o755); err != nil {
+		t.Fatalf("chmod plugin script: %v", err)
+	}
+
+	cfg := &config.Config{
+		ListenAddress:         "127.0.0.1:0",
+		ListenPath:            "/report",
+		BaseDirectory:         baseDir,
+		QuarantineDirectory:   quarantineDir,
+		ServerCertificateFile: filepath.Join(dir, "server.pem"),
+		ServerKeyFile:         filepath.Join(dir, "server.key"),
+		ClientCAFile:          filepath.Join(dir, "ca.pem"),
+		MaxReportSizeBytes:    1 << 20,
+		PluginTimeoutSec:      5,
+		Plugins:               []config.Plugin{{Name: "stub", Path: pluginScript}},
+	}
+
+	srv, err := New(cfg)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listening: %v", err)
+	}
+	tlsLn := tls.NewListener(ln, srv.httpSrv.TLSConfig)
+	go srv.httpSrv.Serve(tlsLn)
+	defer srv.httpSrv.Close()
+
+	clientCert, err := tls.X509KeyPair(clientPEM.cert, clientPEM.key)
+	if err != nil {
+		t.Fatalf("loading client keypair: %v", err)
+	}
+	rootPool := x509.NewCertPool()
+	rootPool.AppendCertsFromPEM(caPEM.cert)
+
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				Certificates: []tls.Certificate{clientCert},
+				RootCAs:      rootPool,
+			},
+		},
+	}
+
+	body, err := os.ReadFile("../../test-data/signed-report.json")
+	if err != nil {
+		t.Fatalf("reading fixture: %v", err)
+	}
+	// Flip a byte inside the report record so the embedded signature no
+	// longer matches.
+	i := bytes.IndexByte(body, '{') + 20
+	body[i] ^= 0xFF
+
+	port := ln.Addr().(*net.TCPAddr).Port
+	url := "https://localhost:" + strconv.Itoa(port) + "/report"
+	resp, err := httpClient.Post(url, "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, http.StatusCreated)
+	}
+
+	if entries, err := os.ReadDir(filepath.Join(baseDir, "myhost.example.com")); err == nil && len(entries) != 0 {
+		t.Errorf("expected no reports under BaseDirectory, got %v", entries)
+	}
+
+	quarantineHostDir := filepath.Join(quarantineDir, "myhost.example.com")
+	entries, err := os.ReadDir(quarantineHostDir)
+	if err != nil {
+		t.Fatalf("reading quarantine host dir: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected exactly one quarantined report, got %d", len(entries))
+	}
+
+	time.Sleep(100 * time.Millisecond)
+	if _, err := os.Stat(pluginLog); err == nil {
+		t.Errorf("plugin ran for a quarantined report, but should not have")
+	}
+}

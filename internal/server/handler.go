@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	"sd-report-collector/internal/config"
 	"sd-report-collector/internal/plugin"
 	"sd-report-collector/internal/report"
 	"sd-report-collector/internal/store"
+	"sd-report-collector/internal/verify"
 )
 
 func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
@@ -38,6 +40,21 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 	if timestamp.IsZero() {
 		slog.Warn("Report has no usable timestamp field, using receive time", "hostname", hostname)
 		timestamp = time.Now()
+	}
+
+	if result := verify.Check(body); result.Signed && result.Err != nil {
+		path, qerr := store.Save(s.cfg.QuarantineDirectory, hostname, timestamp, meta.ReportID, body)
+		if qerr != nil {
+			slog.Log(r.Context(), config.LevelCritical, "Signed report failed verification and could not be quarantined",
+				"hostname", hostname, "error", result.Err, "quarantine_error", qerr)
+		} else {
+			slog.Log(r.Context(), config.LevelCritical, "Signed report failed verification; quarantined",
+				"hostname", hostname, "path", path, "error", result.Err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+		return
 	}
 
 	path, err := store.Save(s.cfg.BaseDirectory, hostname, timestamp, meta.ReportID, body)
