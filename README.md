@@ -105,7 +105,7 @@ built-in template and omits per-metric type/description annotations,
 respectively. `DescribeFile` should point at the output of
 `systemd-report describe`.
 
-![Example Dashboard](screenshot.html.png)
+![Example Dashboard](screenshots/screenshot.html.png)
 
 ## InfluxDB plugin and Grafana dashboard
 
@@ -164,7 +164,9 @@ variable to match `[InfluxDB] Bucket` above (it defaults to
 `sd-report-collector`). The `host` variable then lists the hosts found in
 that bucket.
 
-![Example Grafana Dashboard](grafana-dashboard.png)
+![Example Grafana Dashboard 1](screenshots/grafana-dashboard-1.png)
+![Example Grafana Dashboard 2](screenshots/grafana-dashboard-2.png)
+![Example Grafana Dashboard 3](screenshots/grafana-dashboard-3.png)
 
 ## Todo
 
