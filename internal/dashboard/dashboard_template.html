@@ -203,6 +203,10 @@
   .table-wrap { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; overflow: auto; max-height: 640px; }
   thead { position: sticky; top: 0; background: var(--surface-1); z-index: 1; }
 
+  .card .scroll-list { max-height: 320px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; }
+  .card .scroll-list table { font-size: 12.5px; }
+  .card .scroll-list thead { position: sticky; top: 0; background: var(--surface-1); z-index: 1; }
+
   footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 12px; }
   footer code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 </style>
@@ -780,6 +784,68 @@ function kv(container, label, val, title) {
       kv(c, 'Carrier changes', netStat('io.systemd.NetworkStatistics.CarrierChanges', iface), desc('io.systemd.NetworkStatistics.CarrierChanges'));
       grid.appendChild(c);
     });
+  }
+
+  // SELinux
+  {
+    const seLinuxFields = [
+      ['Status', 'org.openSUSE.Metrics.SELinux.Status'],
+      ['Mode', 'org.openSUSE.Metrics.SELinux.Mode'],
+      ['Config file mode', 'org.openSUSE.Metrics.SELinux.ConfigfileMode'],
+      ['Policy', 'org.openSUSE.Metrics.SELinux.Policy'],
+      ['Policy RPM version', 'org.openSUSE.Metrics.SELinux.PolicyRPMVersion'],
+      ['Policy MLS', 'org.openSUSE.Metrics.SELinux.PolicyMLS'],
+      ['Policy deny unknown', 'org.openSUSE.Metrics.SELinux.PolicyDenyUnknown'],
+      ['Max kernel policy version', 'org.openSUSE.Metrics.SELinux.MaxKernelPolicyVersion'],
+      ['Memory protection checking', 'org.openSUSE.Metrics.SELinux.CheckReqProt'],
+      ['Root directory', 'org.openSUSE.Metrics.SELinux.RootDir'],
+    ];
+    const c = el('div', { class: 'card' });
+    c.appendChild(el('h3', { text: 'SELinux' }));
+    for (const [label, name] of seLinuxFields) {
+      const v = value1(name);
+      if (v == null) continue;
+      if (name.endsWith('.Mode')) {
+        const sev = v === 'enforcing' ? 'good' : v === 'permissive' ? 'warning' : null;
+        const row = el('div', { class: 'kv' });
+        row.title = desc(name);
+        row.appendChild(el('span', { class: 'k', text: label }));
+        const vSpan = el('span', { class: 'v' });
+        if (sev) vSpan.innerHTML = `<span class="badge" style="background:${severityColor(sev)}">${escapeHtml(v)}</span>`;
+        else vSpan.textContent = v;
+        row.appendChild(vSpan);
+        c.appendChild(row);
+      } else {
+        kv(c, label, v, desc(name));
+      }
+    }
+    if (c.children.length > 1) grid.appendChild(c);
+  }
+
+  // SELinux policy booleans
+  {
+    const booleans = byName('org.openSUSE.Metrics.SELinux.PolicyBooleans');
+    if (booleans.length) {
+      const c = el('div', { class: 'card' });
+      c.appendChild(el('h3', { text: 'SELinux policy booleans' }));
+      const wrap = el('div', { class: 'scroll-list' });
+      const table = el('table');
+      table.innerHTML = `<thead><tr><th>Value</th><th>State</th></tr></thead>
+        <tbody>${booleans.slice().sort((a, b) => a.object.localeCompare(b.object)).map(b => {
+          const state = b.value;
+          const stateHtml = state === 'on'
+            ? `<span class="badge" style="background:var(--good)">on</span>`
+            : `<span class="badge muted">${escapeHtml(state || '—')}</span>`;
+          return `<tr>
+            <td class="unit-name">${escapeHtml(b.object)}</td>
+            <td>${stateHtml}</td>
+          </tr>`;
+        }).join('')}</tbody>`;
+      wrap.appendChild(table);
+      c.appendChild(wrap);
+      c.appendChild(el('div', { class: 'meter-sub', text: `${booleans.length} booleans` }));
+      grid.appendChild(c);
+    }
   }
 
 })();

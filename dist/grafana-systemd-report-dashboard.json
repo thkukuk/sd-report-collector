@@ -2067,6 +2067,102 @@
           "sort": "desc"
         }
       }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 105
+      },
+      "id": 300,
+      "panels": [],
+      "title": "SELinux",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 106
+      },
+      "id": 301,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"${host}\" and r._field == \"value\" and (r._measurement == \"org.openSUSE.Metrics.SELinux.Status\" or r._measurement == \"org.openSUSE.Metrics.SELinux.Mode\" or r._measurement == \"org.openSUSE.Metrics.SELinux.ConfigfileMode\" or r._measurement == \"org.openSUSE.Metrics.SELinux.Policy\" or r._measurement == \"org.openSUSE.Metrics.SELinux.PolicyMLS\" or r._measurement == \"org.openSUSE.Metrics.SELinux.PolicyDenyUnknown\" or r._measurement == \"org.openSUSE.Metrics.SELinux.PolicyRPMVersion\" or r._measurement == \"org.openSUSE.Metrics.SELinux.MaxKernelPolicyVersion\" or r._measurement == \"org.openSUSE.Metrics.SELinux.CheckReqProt\" or r._measurement == \"org.openSUSE.Metrics.SELinux.RootDir\"))\n  |> last()\n  |> map(fn: (r) => ({r with _value: display(v: r._value)}))\n  |> group()\n  |> map(fn: (r) => ({r with _measurement:\n      if r._measurement == \"org.openSUSE.Metrics.SELinux.Status\" then \"status\"\n      else if r._measurement == \"org.openSUSE.Metrics.SELinux.Mode\" then \"mode\"\n      else if r._measurement == \"org.openSUSE.Metrics.SELinux.ConfigfileMode\" then \"config file mode\"\n      else if r._measurement == \"org.openSUSE.Metrics.SELinux.Policy\" then \"policy\"\n      else if r._measurement == \"org.openSUSE.Metrics.SELinux.PolicyMLS\" then \"policy mls\"\n      else if r._measurement == \"org.openSUSE.Metrics.SELinux.PolicyDenyUnknown\" then \"deny unknown\"\n      else if r._measurement == \"org.openSUSE.Metrics.SELinux.PolicyRPMVersion\" then \"policy rpm version\"\n      else if r._measurement == \"org.openSUSE.Metrics.SELinux.MaxKernelPolicyVersion\" then \"max kernel policy version\"\n      else if r._measurement == \"org.openSUSE.Metrics.SELinux.CheckReqProt\" then \"memory protection checking\"\n      else \"root directory\"}))\n  |> rename(columns: {_measurement: \"property\", _value: \"value\"})\n  |> keep(columns: [\"property\", \"value\"])\n  |> sort(columns: [\"property\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "SELinux",
+      "type": "table",
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 106
+      },
+      "id": 302,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.Metrics.SELinux.PolicyBooleans\" and r._field == \"value\" and r.host == \"${host}\" and exists r.object)\n  |> last()\n  |> group()\n  |> map(fn: (r) => ({boolean: r.object, state: r._value}))\n  |> sort(columns: [\"boolean\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "SELinux Policy Booleans",
+      "type": "table",
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
     }
   ],
   "refresh": "5m",
@@ -2116,6 +2212,6 @@
   "timezone": "",
   "title": "systemd-report",
   "uid": "sd-report-collector",
-  "version": 5,
+  "version": 9,
   "weekStart": ""
 }
