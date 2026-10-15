@@ -16,6 +16,9 @@ source_root = meson.project_source_root()
 
 vendor_libdir = get_option('vendor_libdir')
 
+# Make sure libeconf is installed and recent enough
+libeconf = dependency('libeconf', version : '>=0.8.5', required : true)
+
 go_env = environment()
 go_env.set('GOFLAGS', '')
 
