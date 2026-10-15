@@ -15,4 +15,5 @@ ExecStart=/usr/lib/systemd/systemd-report upload \
 	--url=https://${REPORT_SERVER}:8443/report \
 	--cert=${REPORT_CERT} \
 	--key=${REPORT_KEY} \
-	--trust=${REPORT_TRUST}
+	--trust=${REPORT_TRUST} \
+	--sign=best-effort
