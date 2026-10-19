@@ -101,6 +101,12 @@ io.systemd.GeoIP.Timestamp                                       gauge   CLOCK_R
 io.systemd.GeoIP.Timezone                                        string  IANA time zone name of the area the system is located in
 io.systemd.GeoIP.ZipCode                                         string  Postal code of the area the system is located in
 io.systemd.HWMon.TemperatureCelsius                              gauge   Per hwmon sensor metric: current temperature in degrees Celsius (object=parent device, chip=hwmon chip name, sensor=temp<N>, label=sensor label if any)
+io.systemd.InstanceMetadata.Hostname                             string  Instance hostname reported by IMDS
+io.systemd.InstanceMetadata.IPv4Public                           string  Public IPv4 address reported by IMDS
+io.systemd.InstanceMetadata.IPv6Public                           string  Public IPv6 address reported by IMDS
+io.systemd.InstanceMetadata.Region                               string  Cloud region reported by IMDS
+io.systemd.InstanceMetadata.Vendor                               string  Detected cloud vendor
+io.systemd.InstanceMetadata.Zone                                 string  Cloud availability zone reported by IMDS
 io.systemd.Journal.HighPriorityMessage                           object  The most recent high-priority journal messages
 io.systemd.JournalDaemon.MessagesByPriority                      counter Number of log messages received since boot, by priority (priority=emerg|alert|crit|err|warning|notice|info|debug)
 io.systemd.JournalDaemon.MessagesByTransport                     counter Number of log messages received since boot, by transport (transport=syslog|journal|stdout|audit|kernel)
@@ -205,4 +211,4 @@ org.openSUSE.rebootmgr.RebootStatus                              string  Whether
 org.openSUSE.rebootmgr.RebootStrategy                            string  Currently configured reboot strategy
 org.openSUSE.rebootmgr.Version                                   string  Version of rebootmgr
 
-205 metrics listed.
+211 metrics listed.
