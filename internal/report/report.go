@@ -25,9 +25,11 @@ type Meta struct {
 	ReportID  string
 }
 
-// firstRecord returns the first JSON record in body, stripping the JSON-SEQ
-// framing if present.
-func firstRecord(body []byte) []byte {
+// FirstRecord returns the first JSON record in body, stripping the JSON-SEQ
+// framing if present. Callers that need the report object itself, rather
+// than just the fields ExtractMeta pulls out, use this directly so a signed
+// report's trailing signature records don't make the JSON invalid.
+func FirstRecord(body []byte) []byte {
 	trimmed := bytes.TrimLeft(body, " \t\r\n")
 	if len(trimmed) == 0 || trimmed[0] != recordSeparator {
 		return trimmed
@@ -48,7 +50,7 @@ func ExtractMeta(body []byte) Meta {
 		Timestamp string `json:"timestamp"`
 		ReportID  string `json:"reportID"`
 	}
-	if err := json.Unmarshal(firstRecord(body), &fields); err != nil {
+	if err := json.Unmarshal(FirstRecord(body), &fields); err != nil {
 		return Meta{}
 	}
 

@@ -96,6 +96,29 @@ func TestBuildPointsFromFixtureReport(t *testing.T) {
 	}
 }
 
+func TestBuildPointsFromSignedReport(t *testing.T) {
+	reportObj := `{"timestamp":"Mon 2026-10-05 07:23:28 UTC","metrics":[{"name":"x","value":1}]}`
+	signature := `{"mechanism":"plain","sha256":"deadbeef","data":{"signature":"","key":""}}`
+	body := []byte("\x1e" + reportObj + "\n\x1e" + signature + "\n")
+
+	reportsDir := t.TempDir()
+	reportPath := writeCompressedReport(t, reportsDir, "signedhost", body)
+
+	hostname, points, err := buildPoints(reportPath, nil)
+	if err != nil {
+		t.Fatalf("buildPoints: %v", err)
+	}
+	if hostname != "signedhost" {
+		t.Errorf("hostname = %q, want %q", hostname, "signedhost")
+	}
+	if len(points) != 1 {
+		t.Fatalf("len(points) = %d, want 1", len(points))
+	}
+	if points[0].Name() != "x" {
+		t.Errorf("measurement = %q, want %q", points[0].Name(), "x")
+	}
+}
+
 func TestBuildPointsTagsAndFields(t *testing.T) {
 	body := []byte(`{
 		"timestamp": "Mon 2026-10-05 07:23:28 UTC",

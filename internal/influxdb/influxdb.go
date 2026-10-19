@@ -83,6 +83,7 @@ func buildPoints(reportPath string, exclude []string) (string, []*write.Point, e
 	if err != nil {
 		return "", nil, fmt.Errorf("decompressing %s: %w", reportPath, err)
 	}
+	reportJSON = report.FirstRecord(reportJSON)
 
 	var doc reportDoc
 	if err := json.Unmarshal(reportJSON, &doc); err != nil {

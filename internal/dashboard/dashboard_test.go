@@ -172,3 +172,34 @@ func TestGenerateWithCustomTemplate(t *testing.T) {
 		t.Errorf("custom template not used, got: %s", html)
 	}
 }
+
+func TestGenerateWithSignedReport(t *testing.T) {
+	report := `{"metrics":[{"name":"x","value":1}]}`
+	signature := `{"mechanism":"plain","sha256":"deadbeef","data":{"signature":"","key":""}}`
+	body := []byte("\x1e" + report + "\n\x1e" + signature + "\n")
+
+	reportsDir := t.TempDir()
+	reportPath := writeCompressedReport(t, reportsDir, "signedhost", body)
+
+	outDir := t.TempDir()
+	cfg := &config.DashboardConfig{OutputDirectory: outDir}
+
+	outPath, metrics, err := Generate(cfg, reportPath)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	if metrics != 1 {
+		t.Errorf("metrics = %d, want 1", metrics)
+	}
+
+	html, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("reading generated dashboard: %v", err)
+	}
+	if !strings.Contains(string(html), `"name":"x"`) {
+		t.Errorf("expected report metric in output, got: %s", html)
+	}
+	if strings.Contains(string(html), "mechanism") {
+		t.Errorf("signature record leaked into output: %s", html)
+	}
+}

@@ -15,6 +15,7 @@ import (
 	"github.com/klauspost/compress/zstd"
 
 	"sd-report-collector/internal/config"
+	"sd-report-collector/internal/report"
 )
 
 //go:embed dashboard_template.html
@@ -42,6 +43,7 @@ func Generate(cfg *config.DashboardConfig, reportPath string) (string, int, erro
 	if err != nil {
 		return "", 0, fmt.Errorf("decompressing %s: %w", reportPath, err)
 	}
+	reportJSON = report.FirstRecord(reportJSON)
 
 	var meta reportMeta
 	if err := json.Unmarshal(reportJSON, &meta); err != nil {
