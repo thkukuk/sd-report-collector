@@ -239,6 +239,9 @@
   <h2 class="section-title">Resources</h2>
   <div class="cards-grid" id="resource-cards"></div>
 
+  <h2 class="section-title">Disks</h2>
+  <div class="cards-grid" id="disk-cards"></div>
+
   <h2 class="section-title">Units</h2>
   <div class="cards-grid" id="units-summary-cards"></div>
 
@@ -651,58 +654,6 @@ function kv(container, label, val, title) {
     }
   }
 
-  // Disk space
-  {
-    const mounts = byName('io.systemd.DiskSpace.SizeBytes');
-    if (mounts.length) {
-      const c = el('div', { class: 'card' });
-      c.appendChild(el('h3', { text: 'Disk space' }));
-      mounts.slice().sort((a, b) => a.object.localeCompare(b.object)).forEach(m => {
-        const size = m.value;
-        const freeM = METRICS.find(x => x.name === 'io.systemd.DiskSpace.FreeBytes' && x.object === m.object);
-        const freeBytes = freeM ? freeM.value : null;
-        if (freeBytes == null || !size) return;
-        const usedBytes = size - freeBytes;
-        const pct = usedBytes / size * 100;
-        const sev = pct > 90 ? 'critical' : pct > 70 ? 'warning' : 'good';
-        const sub = `${m.fields && m.fields.fileSystemType || ''} ${m.fields && m.fields.source || ''}`.trim();
-        fillMeter(c, pct, sev, m.object, `${fmtBytes(usedBytes)} / ${fmtBytes(size)}`, sub, desc('io.systemd.DiskSpace.SizeBytes'));
-      });
-      grid.appendChild(c);
-    }
-  }
-
-  // Disk I/O
-  {
-    const reads = byName('io.systemd.Basic.DiskReadBytes');
-    const writes = byName('io.systemd.Basic.DiskWriteBytes');
-    if (reads.length || writes.length) {
-      const c = el('div', { class: 'card bars-list' });
-      c.appendChild(el('h3', { text: 'Disk I/O (cumulative)' }));
-      function barList(title, items) {
-        if (!items.length) return;
-        c.appendChild(el('div', { style: 'font-size:12px;color:var(--text-secondary);margin:6px 0 2px;', text: title }));
-        const max = Math.max(...items.map(i => i.value), 1);
-        items.slice().sort((a, b) => b.value - a.value).forEach(i => {
-          const row = el('div', { class: 'bar-row' });
-          const lr = el('div', { class: 'label-row' });
-          lr.appendChild(el('span', { text: i.object }));
-          lr.appendChild(el('span', { text: fmtBytes(i.value) }));
-          row.appendChild(lr);
-          const track = el('div', { class: 'bar-track' });
-          const fill = el('div', { class: 'bar-fill' });
-          fill.style.width = (i.value / max * 100) + '%';
-          track.appendChild(fill);
-          row.appendChild(track);
-          c.appendChild(row);
-        });
-      }
-      barList('Read', reads);
-      barList('Written', writes);
-      grid.appendChild(c);
-    }
-  }
-
   // Pressure (PSI)
   {
     const combos = [];
@@ -848,6 +799,137 @@ function kv(container, label, val, title) {
     }
   }
 
+})();
+
+/* ---------- disks ---------- */
+(function renderDiskCards() {
+  const grid = document.getElementById('disk-cards');
+
+  function diskValue(name, object) {
+    const m = METRICS.find(x => x.name === name && x.object === object);
+    return m ? m.value : undefined;
+  }
+  function diskBaseName(dev) {
+    if (!dev) return null;
+    let m = /^(\/dev\/(?:nvme\d+n\d+|mmcblk\d+))p\d+$/.exec(dev);
+    if (m) return m[1];
+    m = /^(\/dev\/[a-zA-Z]+)\d+$/.exec(dev);
+    if (m) return m[1];
+    return dev;
+  }
+
+  const healthNames = [
+    'io.systemd.DiskHealth.DiskVendor', 'io.systemd.DiskHealth.DiskModel', 'io.systemd.DiskHealth.DiskSerial',
+    'io.systemd.DiskHealth.DiskSizeBytes', 'io.systemd.DiskHealth.DiskLogicalSectorSizeBytes',
+    'io.systemd.DiskHealth.DiskPhysicalSectorSizeBytes', 'io.systemd.DiskHealth.DiskPowerOnHours',
+    'io.systemd.DiskHealth.DiskPowerCycles', 'io.systemd.DiskHealth.ATAReallocatedSectors',
+    'io.systemd.DiskHealth.ATAPendingSectors', 'io.systemd.DiskHealth.ATAOfflineUncorrectable',
+    'io.systemd.DiskHealth.ATASmartStatusFailing', 'io.systemd.DiskHealth.NVMeAvailableSparePercent',
+    'io.systemd.DiskHealth.NVMePercentageUsed', 'io.systemd.DiskHealth.NVMeCriticalWarning',
+    'io.systemd.DiskHealth.NVMeMediaErrors',
+  ];
+  const disks = new Set();
+  for (const name of healthNames) for (const m of byName(name)) disks.add(m.object);
+  for (const m of byName('io.systemd.Basic.DiskReadBytes')) disks.add(m.object);
+  for (const m of byName('io.systemd.Basic.DiskWriteBytes')) disks.add(m.object);
+  if (!disks.size) return;
+
+  const mounts = byName('io.systemd.DiskSpace.SizeBytes');
+  const temps = byName('io.systemd.HWMon.TemperatureCelsius');
+
+  [...disks].sort().forEach(disk => {
+    const base = disk.replace(/^\/dev\//, '');
+    const hasHealth = healthNames.some(name => diskValue(name, disk) !== undefined);
+    const read = diskValue('io.systemd.Basic.DiskReadBytes', disk);
+    const write = diskValue('io.systemd.Basic.DiskWriteBytes', disk);
+    const diskMounts = mounts.filter(m => diskBaseName(m.fields && m.fields.source) === disk);
+    if (!hasHealth && !(read || 0) && !(write || 0) && !diskMounts.length) return;
+
+    const vendor = diskValue('io.systemd.DiskHealth.DiskVendor', disk);
+    const model = diskValue('io.systemd.DiskHealth.DiskModel', disk);
+    const title = [vendor, model].filter(Boolean).join(' ');
+
+    const c = el('div', { class: 'card' });
+    c.appendChild(el('h3', { text: title ? `${disk} — ${title}` : disk }));
+
+    kv(c, 'Vendor', vendor, desc('io.systemd.DiskHealth.DiskVendor'));
+    kv(c, 'Model', model, desc('io.systemd.DiskHealth.DiskModel'));
+    kv(c, 'Serial', diskValue('io.systemd.DiskHealth.DiskSerial', disk), desc('io.systemd.DiskHealth.DiskSerial'));
+    const sizeBytes = diskValue('io.systemd.DiskHealth.DiskSizeBytes', disk);
+    kv(c, 'Size', sizeBytes != null ? fmtBytes(sizeBytes) : null, desc('io.systemd.DiskHealth.DiskSizeBytes'));
+    const logSec = diskValue('io.systemd.DiskHealth.DiskLogicalSectorSizeBytes', disk);
+    const physSec = diskValue('io.systemd.DiskHealth.DiskPhysicalSectorSizeBytes', disk);
+    if (logSec != null || physSec != null) {
+      kv(c, 'Sector size', [logSec != null ? `${logSec} B logical` : null, physSec != null ? `${physSec} B physical` : null]
+        .filter(Boolean).join(' / '));
+    }
+    kv(c, 'Power-on hours', diskValue('io.systemd.DiskHealth.DiskPowerOnHours', disk), desc('io.systemd.DiskHealth.DiskPowerOnHours'));
+    kv(c, 'Power cycles', diskValue('io.systemd.DiskHealth.DiskPowerCycles', disk), desc('io.systemd.DiskHealth.DiskPowerCycles'));
+
+    const smartFailing = diskValue('io.systemd.DiskHealth.ATASmartStatusFailing', disk);
+    if (smartFailing != null) {
+      const failing = !!smartFailing;
+      const row = el('div', { class: 'kv' });
+      row.title = desc('io.systemd.DiskHealth.ATASmartStatusFailing');
+      row.appendChild(el('span', { class: 'k', text: 'SMART status' }));
+      const vSpan = el('span', { class: 'v' });
+      vSpan.innerHTML = `<span class="badge" style="background:${severityColor(failing ? 'critical' : 'good')}">${failing ? 'failing' : 'ok'}</span>`;
+      row.appendChild(vSpan);
+      c.appendChild(row);
+    }
+    kv(c, 'Reallocated sectors', diskValue('io.systemd.DiskHealth.ATAReallocatedSectors', disk), desc('io.systemd.DiskHealth.ATAReallocatedSectors'));
+    kv(c, 'Pending sectors', diskValue('io.systemd.DiskHealth.ATAPendingSectors', disk), desc('io.systemd.DiskHealth.ATAPendingSectors'));
+    kv(c, 'Offline uncorrectable', diskValue('io.systemd.DiskHealth.ATAOfflineUncorrectable', disk), desc('io.systemd.DiskHealth.ATAOfflineUncorrectable'));
+
+    const spare = diskValue('io.systemd.DiskHealth.NVMeAvailableSparePercent', disk);
+    kv(c, 'Available spare', spare != null ? spare + ' %' : null, desc('io.systemd.DiskHealth.NVMeAvailableSparePercent'));
+    const used = diskValue('io.systemd.DiskHealth.NVMePercentageUsed', disk);
+    kv(c, 'Percentage used', used != null ? used + ' %' : null, desc('io.systemd.DiskHealth.NVMePercentageUsed'));
+    const critWarn = diskValue('io.systemd.DiskHealth.NVMeCriticalWarning', disk);
+    if (critWarn != null) {
+      const row = el('div', { class: 'kv' });
+      row.title = desc('io.systemd.DiskHealth.NVMeCriticalWarning');
+      row.appendChild(el('span', { class: 'k', text: 'Critical warning' }));
+      const vSpan = el('span', { class: 'v' });
+      vSpan.innerHTML = critWarn === 0
+        ? `<span class="badge" style="background:${severityColor('good')}">none</span>`
+        : `<span class="badge" style="background:${severityColor('critical')}">${critWarn}</span>`;
+      row.appendChild(vSpan);
+      c.appendChild(row);
+    }
+    kv(c, 'Media errors', diskValue('io.systemd.DiskHealth.NVMeMediaErrors', disk), desc('io.systemd.DiskHealth.NVMeMediaErrors'));
+
+    const diskTemps = temps.filter(t => base.startsWith(t.object));
+    if (diskTemps.length) {
+      diskTemps.slice().sort((a, b) => (a.fields.sensor || '').localeCompare(b.fields.sensor || '')).forEach(t => {
+        const label = (t.fields && (t.fields.label || t.fields.sensor)) || 'Temperature';
+        kv(c, `Temp · ${label}`, t.value.toFixed(1) + ' °C', desc('io.systemd.HWMon.TemperatureCelsius'));
+      });
+    }
+
+    if (read != null || write != null) {
+      c.appendChild(el('h3', { style: 'margin-top:14px;', text: 'I/O (cumulative)' }));
+      kv(c, 'Read', read != null ? fmtBytes(read) : null, desc('io.systemd.Basic.DiskReadBytes'));
+      kv(c, 'Written', write != null ? fmtBytes(write) : null, desc('io.systemd.Basic.DiskWriteBytes'));
+    }
+
+    if (diskMounts.length) {
+      c.appendChild(el('h3', { style: 'margin-top:14px;', text: 'Disk space' }));
+      diskMounts.slice().sort((a, b) => a.object.localeCompare(b.object)).forEach(m => {
+        const size = m.value;
+        const freeM = METRICS.find(x => x.name === 'io.systemd.DiskSpace.FreeBytes' && x.object === m.object);
+        const freeBytes = freeM ? freeM.value : null;
+        if (freeBytes == null || !size) return;
+        const usedBytes = size - freeBytes;
+        const pct = usedBytes / size * 100;
+        const sev = pct > 90 ? 'critical' : pct > 70 ? 'warning' : 'good';
+        const sub = `${m.fields && m.fields.fileSystemType || ''} ${m.object}`.trim();
+        fillMeter(c, pct, sev, m.object, `${fmtBytes(usedBytes)} / ${fmtBytes(size)}`, sub, desc('io.systemd.DiskSpace.SizeBytes'));
+      });
+    }
+
+    grid.appendChild(c);
+  });
 })();
 
 /* ---------- units ---------- */
