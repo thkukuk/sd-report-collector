@@ -1312,7 +1312,7 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 75 
               },
               {
                 "color": "red",
@@ -1343,7 +1343,7 @@
       "title": "Disk Space by Mount",
       "type": "bargauge",
       "options": {
-        "displayMode": "gradient",
+        "displayMode": "basic",
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
