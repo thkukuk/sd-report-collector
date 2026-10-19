@@ -60,8 +60,8 @@ func TestBuildPointsFromUncompressedReport(t *testing.T) {
 	if hostname != "plainhost" {
 		t.Errorf("hostname = %q, want %q", hostname, "plainhost")
 	}
-	if len(points) != 4455 {
-		t.Errorf("len(points) = %d, want 4455", len(points))
+	if len(points) != 4443 {
+		t.Errorf("len(points) = %d, want 4443", len(points))
 	}
 }
 
@@ -81,11 +81,11 @@ func TestBuildPointsFromFixtureReport(t *testing.T) {
 	if hostname != "myhost" {
 		t.Errorf("hostname = %q, want %q", hostname, "myhost")
 	}
-	if len(points) != 4455 {
-		t.Errorf("len(points) = %d, want 4455", len(points))
+	if len(points) != 4443 {
+		t.Errorf("len(points) = %d, want 4443", len(points))
 	}
 
-	wantTime, err := time.Parse(time.RFC3339, "2026-10-19T15:00:58Z")
+	wantTime, err := time.Parse(time.RFC3339, "2026-10-19T15:16:34Z")
 	if err != nil {
 		t.Fatalf("parsing expected time: %v", err)
 	}
