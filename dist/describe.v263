@@ -4,7 +4,11 @@ io.systemd.Basic.BootID                                          string  Current
 io.systemd.Basic.CPUUsage                                        counter Aggregate CPU usage across all CPUs in nanoseconds (type=user|system)
 io.systemd.Basic.CPUWait                                         gauge   Aggregate CPU wait across all CPUs in nanoseconds (type=idle|iowait|steal)
 io.systemd.Basic.CPUsOnline                                      gauge   Number of CPUs currently online
+io.systemd.Basic.ClockBoottimeNSec                               counter Time since boot in nanoseconds, including time spent suspended (CLOCK_BOOTTIME)
+io.systemd.Basic.ClockMonotonicNSec                              counter Time since boot in nanoseconds, excluding time spent suspended (CLOCK_MONOTONIC)
+io.systemd.Basic.ClockRealtimeNSec                               gauge   Wall-clock time in nanoseconds since the UNIX epoch (CLOCK_REALTIME)
 io.systemd.Basic.ConfidentialVirtualization                      string  Confidential computing technology
+io.systemd.Basic.DeploymentTimestampNSec                         gauge   Birth time of the file system backing /var/ (or of the root file system, if /var/ is not a separate mount) in nanoseconds since the UNIX epoch, i.e. when the system was deployed
 io.systemd.Basic.DiskReadBytes                                   counter Per block device metric: cumulative number of bytes read (partitions, stacked and virtual devices are excluded)
 io.systemd.Basic.DiskWriteBytes                                  counter Per block device metric: cumulative number of bytes written (partitions, stacked and virtual devices are excluded)
 io.systemd.Basic.Hostname                                        string  System hostname
@@ -62,16 +66,47 @@ io.systemd.CGroup.IOReadBytes                                    counter Per uni
 io.systemd.CGroup.IOReadOperations                               counter Per unit metric: IO read operations
 io.systemd.CGroup.MemoryUsage                                    gauge   Per unit metric: memory usage in bytes
 io.systemd.CGroup.TasksCurrent                                   gauge   Per unit metric: current number of tasks
+io.systemd.DiskHealth.ATAOfflineUncorrectable                    gauge   Per rotating ATA disk metric: number of uncorrectable sectors found during offline scans (SMART attribute 198)
+io.systemd.DiskHealth.ATAPendingSectors                          gauge   Per rotating ATA disk metric: number of unstable sectors waiting to be remapped (SMART attribute 197)
+io.systemd.DiskHealth.ATAReallocatedSectors                      counter Per rotating ATA disk metric: number of sectors remapped to spare area (SMART attribute 5)
+io.systemd.DiskHealth.ATASmartStatusFailing                      gauge   Per ATA disk metric: 1 if the disk's overall SMART status reports a threshold exceeded, 0 otherwise
+io.systemd.DiskHealth.DiskLogicalSectorSizeBytes                 gauge   Per disk metric: logical sector size in bytes
+io.systemd.DiskHealth.DiskModel                                  string  Per disk metric: model name
+io.systemd.DiskHealth.DiskPhysicalSectorSizeBytes                gauge   Per disk metric: physical sector size in bytes
+io.systemd.DiskHealth.DiskPowerCycles                            counter Per NVMe or ATA disk metric: number of power cycles over the disk's lifetime
+io.systemd.DiskHealth.DiskPowerOnHours                           counter Per NVMe or ATA disk metric: number of hours the disk has been powered on over its lifetime
+io.systemd.DiskHealth.DiskSerial                                 string  Per disk metric: serial number
+io.systemd.DiskHealth.DiskSizeBytes                              gauge   Per disk metric: size in bytes
+io.systemd.DiskHealth.DiskVendor                                 string  Per disk metric: vendor name
+io.systemd.DiskHealth.NVMeAvailableSparePercent                  gauge   Per NVMe disk metric: remaining spare capacity in percent
+io.systemd.DiskHealth.NVMeCriticalWarning                        gauge   Per NVMe disk metric: critical warning bitmask, 0 if all is well
+io.systemd.DiskHealth.NVMeMediaErrors                            counter Per NVMe disk metric: number of unrecovered data integrity errors
+io.systemd.DiskHealth.NVMePercentageUsed                         gauge   Per NVMe disk metric: vendor estimate of the used up life time in percent, may exceed 100
 io.systemd.DiskSpace.FreeBytes                                   gauge   Per file system metric: disk space available to unprivileged users in bytes, on writable block device backed file systems (object=mount point, fileSystemType=file system type, source=backing device, originatingSource=device the backing device is stacked on, if any)
 io.systemd.DiskSpace.SizeBytes                                   gauge   Per file system metric: file system size in bytes, on writable block device backed file systems (object=mount point, fileSystemType=file system type, source=backing device, originatingSource=device the backing device is stacked on, if any)
+io.systemd.GeoIP.ASDomain                                        string  Associated domain of the ASN
+io.systemd.GeoIP.ASN                                             string  Autonomous System Number of the IP address
+io.systemd.GeoIP.ASName                                          string  Associated name of the ASN
+io.systemd.GeoIP.City                                            string  Name of the city the system is located in
+io.systemd.GeoIP.ContinentCode                                   string  Code of the continent the system is located in
+io.systemd.GeoIP.ContinentName                                   string  Name of the continent the system is located in
+io.systemd.GeoIP.CountryCode                                     string  ISO 3166-1 alpha-2 code of the country the system is located in
+io.systemd.GeoIP.CountryName                                     string  Name of the country the system is located in
+io.systemd.GeoIP.Latitude                                        gauge   Latitude of the system's location in decimal degrees
+io.systemd.GeoIP.Longitude                                       gauge   Longitude of the system's location in decimal degrees
+io.systemd.GeoIP.PublicAddress                                   string  Public IP address of the system as seen by the geolocation service, in normalized form
+io.systemd.GeoIP.RegionCode                                      string  Code of the region (state, province, …) the system is located in
+io.systemd.GeoIP.RegionName                                      string  Name of the region (state, province, …) the system is located in
+io.systemd.GeoIP.Timestamp                                       gauge   CLOCK_REALTIME microseconds at which the geolocation data was acquired from the service
+io.systemd.GeoIP.Timezone                                        string  IANA time zone name of the area the system is located in
+io.systemd.GeoIP.ZipCode                                         string  Postal code of the area the system is located in
 io.systemd.HWMon.TemperatureCelsius                              gauge   Per hwmon sensor metric: current temperature in degrees Celsius (object=parent device, chip=hwmon chip name, sensor=temp<N>, label=sensor label if any)
-io.systemd.InstanceMetadata.Hostname                             string  Instance hostname reported by IMDS
-io.systemd.InstanceMetadata.IPv4Public                           string  Public IPv4 address reported by IMDS
-io.systemd.InstanceMetadata.IPv6Public                           string  Public IPv6 address reported by IMDS
-io.systemd.InstanceMetadata.Region                               string  Cloud region reported by IMDS
-io.systemd.InstanceMetadata.Vendor                               string  Detected cloud vendor
-io.systemd.InstanceMetadata.Zone                                 string  Cloud availability zone reported by IMDS
 io.systemd.Journal.HighPriorityMessage                           object  The most recent high-priority journal messages
+io.systemd.JournalDaemon.MessagesByPriority                      counter Number of log messages received since boot, by priority (priority=emerg|alert|crit|err|warning|notice|info|debug)
+io.systemd.JournalDaemon.MessagesByTransport                     counter Number of log messages received since boot, by transport (transport=syslog|journal|stdout|audit|kernel)
+io.systemd.Login.CurrentSessions                                 gauge   Number of current sessions, including closing ones, by session class
+io.systemd.Login.SessionsStarted                                 counter Number of sessions started since boot, by session class
+io.systemd.Login.SuspendCounter                                  counter Number of suspend cycles since boot, by result (result=success|fail)
 io.systemd.Manager.ActiveTimestamp                               gauge   Per unit metric: timestamp of active state transitions in microseconds; 0 indicates the transition has not occurred
 io.systemd.Manager.FinishTimestamp.Monotonic                     gauge   CLOCK_MONOTONIC microseconds at which userspace finished booting
 io.systemd.Manager.FinishTimestamp.Realtime                      gauge   CLOCK_REALTIME microseconds at which userspace finished booting
@@ -119,7 +154,7 @@ io.systemd.Manager.ShutdownStartTimestamp.Realtime               gauge   CLOCK_R
 io.systemd.Manager.StateChangeTimestamp                          gauge   Per unit metric: timestamp of the last state change in microseconds; 0 indicates no state change has occurred
 io.systemd.Manager.StatusErrno                                   gauge   Per service metric: errno status of the service
 io.systemd.Manager.SystemState                                   string  Overall system state
-io.systemd.Manager.UnitActiveState                               string  Per unit metric: active state
+io.systemd.Manager.UnitActiveState                               string  Per unit metric: active state, with the type-specific sub state
 io.systemd.Manager.UnitLoadState                                 string  Per unit metric: load state
 io.systemd.Manager.UnitsByLoadStateTotal                         gauge   Total number of units by load state
 io.systemd.Manager.UnitsByStateTotal                             gauge   Total number of units of different state
@@ -134,15 +169,6 @@ io.systemd.Manager.UnitsTotal                                    gauge   Total n
 io.systemd.Manager.UserspaceTimestamp.Monotonic                  gauge   CLOCK_MONOTONIC microseconds at which userspace was reached
 io.systemd.Manager.UserspaceTimestamp.Realtime                   gauge   CLOCK_REALTIME microseconds at which userspace was reached
 io.systemd.Manager.Version                                       string  Version of systemd
-io.systemd.Network.Address                                       string  Per interface metric: configured IP address in CIDR notation
-io.systemd.Network.AddressState                                  string  Per interface metric: address state
-io.systemd.Network.AdministrativeState                           string  Per interface metric: administrative state
-io.systemd.Network.CarrierState                                  string  Per interface metric: carrier state
-io.systemd.Network.IPv4AddressState                              string  Per interface metric: IPv4 address state
-io.systemd.Network.IPv6AddressState                              string  Per interface metric: IPv6 address state
-io.systemd.Network.ManagedInterfaces                             gauge   Number of network interfaces managed by systemd-networkd
-io.systemd.Network.OperationalState                              string  Per interface metric: operational state
-io.systemd.Network.RequiredForOnline                             string  Per interface metric: required operational state for online, or 'no' if not required
 io.systemd.NetworkStatistics.CarrierChanges                      counter Per interface metric: number of times the carrier state changed (object=interface name, ifindex=interface index, type=interface type, kind=interface kind)
 io.systemd.NetworkStatistics.Collisions                          counter Per interface metric: number of collisions during packet transmission
 io.systemd.NetworkStatistics.MTU                                 gauge   Per interface metric: maximum transmission unit in bytes
@@ -157,6 +183,18 @@ io.systemd.NetworkStatistics.TransmitDropped                     counter Per int
 io.systemd.NetworkStatistics.TransmitErrors                      counter Per interface metric: number of transmit errors
 io.systemd.NetworkStatistics.TransmitPackets                     counter Per interface metric: number of packets transmitted
 io.systemd.NetworkStatistics.TransmitQueueLength                 gauge   Per interface metric: transmit queue length in packets
+org.openSUSE.Metrics.SELinux.CheckReqProt                        string  SELinux Memory protection checking
+org.openSUSE.Metrics.SELinux.ConfigfileMode                      string  SELinux mode from config file
+org.openSUSE.Metrics.SELinux.MaxKernelPolicyVersion              gauge   Max kernel policy version
+org.openSUSE.Metrics.SELinux.Mode                                string  SELinux mode: permissive or enforcing
+org.openSUSE.Metrics.SELinux.Policy                              string  Loaded SELinux policy name
+org.openSUSE.Metrics.SELinux.PolicyBooleans                      string  Report the current state of booleans
+org.openSUSE.Metrics.SELinux.PolicyDenyUnknown                   string  SELinux Policy deny_unknown status
+org.openSUSE.Metrics.SELinux.PolicyMLS                           string  SELinux Policy MLS status
+org.openSUSE.Metrics.SELinux.PolicyRPMVersion                    string  Version of selinux-policy RPM
+org.openSUSE.Metrics.SELinux.RootDir                             string  SELinux root directory
+org.openSUSE.Metrics.SELinux.Status                              string  SELinux Status (enabled/disabled)
+org.openSUSE.Metrics.Version                                     string  Version of metrics-exporter
 org.openSUSE.rebootmgr.MaintenanceWindowDuration                 gauge   Duration of the configured maintenance window in seconds
 org.openSUSE.rebootmgr.MaintenanceWindowStart                    string  Start of the configured maintenance window as calendar specification
 org.openSUSE.rebootmgr.RebootDisabled                            string  Whether reboots are temporarily disabled
@@ -167,4 +205,4 @@ org.openSUSE.rebootmgr.RebootStatus                              string  Whether
 org.openSUSE.rebootmgr.RebootStrategy                            string  Currently configured reboot strategy
 org.openSUSE.rebootmgr.Version                                   string  Version of rebootmgr
 
-167 metrics listed.
+205 metrics listed.
