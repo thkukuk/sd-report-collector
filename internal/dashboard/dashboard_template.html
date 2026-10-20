@@ -712,9 +712,12 @@ function kv(container, label, val, title) {
     }
   }
 
-  // Network addresses
+  // Network addresses (networkd, falling back to NetworkManager metrics)
   {
-    const addrs = byName('io.systemd.Network.Address');
+    const addressFamily = byName('io.systemd.Network.Address').length
+      ? 'io.systemd.Network.Address'
+      : 'org.openSUSE.Metrics.Network.Address';
+    const addrs = byName(addressFamily);
     if (addrs.length) {
       const c = el('div', { class: 'card' });
       c.appendChild(el('h3', { text: 'Network addresses' }));
@@ -730,9 +733,9 @@ function kv(container, label, val, title) {
         c.appendChild(el('div', { style: 'font-weight:600;margin-top:10px;', text: iface }));
         [['IPv4', ipv4], ['IPv6', ipv6]].forEach(([label, list]) => {
           if (!list.length) return;
-          c.appendChild(el('div', { class: 'addr-fam', title: desc('io.systemd.Network.Address'), text: label }));
+          c.appendChild(el('div', { class: 'addr-fam', title: desc(addressFamily), text: label }));
           list.forEach(addr => {
-            c.appendChild(el('div', { class: 'addr-line', title: desc('io.systemd.Network.Address'), text: addr }));
+            c.appendChild(el('div', { class: 'addr-line', title: desc(addressFamily), text: addr }));
           });
         });
       });
