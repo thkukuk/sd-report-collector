@@ -26,6 +26,8 @@ type Config struct {
 	ServerCertificateFile string
 	ServerKeyFile         string
 	ClientCAFile          string
+	TrustedKeysDirectory  string
+	KnownKeysDirectory    string
 	MaxReportSizeBytes    int64
 	MaxReportsPerHost     int64
 	PluginTimeoutSec      int64
@@ -42,6 +44,8 @@ func defaults() Config {
 		ServerCertificateFile: "/etc/ssl/certs/sd-report-collector.pem",
 		ServerKeyFile:         "/etc/ssl/private/sd-report-collector.pem",
 		ClientCAFile:          "/etc/ssl/sd-report-collector/ca.pem",
+		TrustedKeysDirectory:  "/etc/sd-report-collector/clients.sign",
+		KnownKeysDirectory:    "/var/lib/sd-report-collector/clients.sign",
 		MaxReportSizeBytes:    10 * 1024 * 1024,
 		MaxReportsPerHost:     2016, // 7 days at one report every 5 minutes
 		PluginTimeoutSec:      30,
@@ -83,6 +87,12 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 	if cfg.ClientCAFile, err = kf.getString("Server", "ClientCAFile", cfg.ClientCAFile); err != nil {
+		return nil, err
+	}
+	if cfg.TrustedKeysDirectory, err = kf.getString("Server", "TrustedKeysDirectory", cfg.TrustedKeysDirectory); err != nil {
+		return nil, err
+	}
+	if cfg.KnownKeysDirectory, err = kf.getString("Server", "KnownKeysDirectory", cfg.KnownKeysDirectory); err != nil {
 		return nil, err
 	}
 	if cfg.MaxReportSizeBytes, err = kf.getInt("Server", "MaxReportSizeBytes", cfg.MaxReportSizeBytes); err != nil {

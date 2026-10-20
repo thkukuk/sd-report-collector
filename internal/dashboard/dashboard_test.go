@@ -61,7 +61,7 @@ func TestGenerateWritesDashboardNamedAfterHostname(t *testing.T) {
 		DescribeFile:    "../../test-data/report.describe",
 	}
 
-	outPath, metrics, err := Generate(cfg, reportPath)
+	outPath, metrics, err := Generate(cfg, "trusted", reportPath)
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
@@ -82,8 +82,12 @@ func TestGenerateWritesDashboardNamedAfterHostname(t *testing.T) {
 
 	if strings.Contains(content, "__REPORT_JSON__") ||
 		strings.Contains(content, "__DESCRIBE_JSON__") ||
-		strings.Contains(content, "__ERRNO_JSON__") {
+		strings.Contains(content, "__ERRNO_JSON__") ||
+		strings.Contains(content, "__SIGN_STATUS_JSON__") {
 		t.Errorf("placeholder left unsubstituted in output")
+	}
+	if !strings.Contains(content, `id="sign-status-data" type="application/json">"trusted"`) {
+		t.Errorf("expected sign status %q embedded in output", "trusted")
 	}
 	if !strings.Contains(content, `"org.openSUSE.rebootmgr.RebootStatus"`) {
 		t.Errorf("expected report metric name in output")
@@ -108,7 +112,7 @@ func TestGenerateWithoutDescribeFile(t *testing.T) {
 	outDir := t.TempDir()
 	cfg := &config.DashboardConfig{OutputDirectory: outDir}
 
-	outPath, _, err := Generate(cfg, reportPath)
+	outPath, _, err := Generate(cfg, "unsigned", reportPath)
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
@@ -129,7 +133,7 @@ func TestGenerateWithUncompressedReport(t *testing.T) {
 	outDir := t.TempDir()
 	cfg := &config.DashboardConfig{OutputDirectory: outDir}
 
-	outPath, metrics, err := Generate(cfg, reportPath)
+	outPath, metrics, err := Generate(cfg, "unsigned", reportPath)
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
@@ -156,7 +160,7 @@ func TestGenerateWithCustomTemplate(t *testing.T) {
 	outDir := t.TempDir()
 	cfg := &config.DashboardConfig{OutputDirectory: outDir, TemplateFile: tmplPath}
 
-	outPath, metrics, err := Generate(cfg, reportPath)
+	outPath, metrics, err := Generate(cfg, "first-seen", reportPath)
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
@@ -184,7 +188,7 @@ func TestGenerateWithSignedReport(t *testing.T) {
 	outDir := t.TempDir()
 	cfg := &config.DashboardConfig{OutputDirectory: outDir}
 
-	outPath, metrics, err := Generate(cfg, reportPath)
+	outPath, metrics, err := Generate(cfg, "known", reportPath)
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}

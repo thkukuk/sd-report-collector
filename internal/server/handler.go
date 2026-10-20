@@ -42,7 +42,8 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 		timestamp = time.Now()
 	}
 
-	if result := verify.Check(body); result.Signed && result.Err != nil {
+	result := verify.Check(body, hostname, s.trustStore)
+	if result.Signed && result.Err != nil {
 		path, qerr := store.Save(s.cfg.QuarantineDirectory, hostname, timestamp, meta.ReportID, body)
 		if qerr != nil {
 			slog.Log(r.Context(), config.LevelCritical, "Signed report failed verification and could not be quarantined",
@@ -63,7 +64,7 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to store report", http.StatusInternalServerError)
 		return
 	}
-	slog.Info("Report saved", "hostname", hostname, "path", path)
+	slog.Info("Report saved", "hostname", hostname, "path", path, "signed", result.Signed, "origin", result.Origin)
 
 	if err := store.Prune(s.cfg.BaseDirectory, hostname, s.cfg.MaxReportsPerHost); err != nil {
 		slog.Warn("Failed to prune old reports", "hostname", hostname, "error", err)
@@ -77,7 +78,7 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 		s.plugins.Add(1)
 		go func() {
 			defer s.plugins.Done()
-			plugin.RunAll(s.cfg.Plugins, time.Duration(s.cfg.PluginTimeoutSec)*time.Second, path)
+			plugin.RunAll(s.cfg.Plugins, time.Duration(s.cfg.PluginTimeoutSec)*time.Second, string(result.Origin), path)
 		}()
 	}
 }

@@ -13,13 +13,15 @@ import (
 	"time"
 
 	"sd-report-collector/internal/config"
+	"sd-report-collector/internal/verify"
 )
 
 // Server is the mTLS report-receiving daemon.
 type Server struct {
-	cfg     *config.Config
-	httpSrv *http.Server
-	plugins sync.WaitGroup
+	cfg        *config.Config
+	httpSrv    *http.Server
+	plugins    sync.WaitGroup
+	trustStore verify.TrustStore
 }
 
 // New builds a Server from cfg, loading the server certificate/key and the
@@ -30,7 +32,13 @@ func New(cfg *config.Config) (*Server, error) {
 		return nil, err
 	}
 
-	s := &Server{cfg: cfg}
+	s := &Server{
+		cfg: cfg,
+		trustStore: verify.TrustStore{
+			TrustedDir: cfg.TrustedKeysDirectory,
+			KnownDir:   cfg.KnownKeysDirectory,
+		},
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc(cfg.ListenPath, s.handleReport)

@@ -31,9 +31,12 @@ type reportMeta struct {
 // passed to every sd-report-collector plugin, zstd-compressed or not) into
 // an HTML dashboard under cfg.OutputDirectory, named after the report's
 // hostname (taken from reportPath's parent directory, matching how
-// internal/store lays out saved reports). It returns the path written and
-// the number of metrics the report contained.
-func Generate(cfg *config.DashboardConfig, reportPath string) (string, int, error) {
+// internal/store lays out saved reports). signStatus is the sign-status
+// sd-report-collector passed as this plugin's first argument ("unsigned",
+// "trusted", "known", or "first-seen"; see internal/verify.Origin) and is
+// shown in the dashboard header. It returns the path written and the number
+// of metrics the report contained.
+func Generate(cfg *config.DashboardConfig, signStatus, reportPath string) (string, int, error) {
 	compressed, err := os.ReadFile(reportPath)
 	if err != nil {
 		return "", 0, fmt.Errorf("reading %s: %w", reportPath, err)
@@ -68,7 +71,7 @@ func Generate(cfg *config.DashboardConfig, reportPath string) (string, int, erro
 		hostname = "unknown"
 	}
 
-	html, err := render(tmpl, reportJSON, describe, hostList(cfg.Hosts, hostname), hostname)
+	html, err := render(tmpl, reportJSON, describe, hostList(cfg.Hosts, hostname), hostname, signStatus)
 	if err != nil {
 		return "", 0, err
 	}
@@ -132,7 +135,7 @@ func hostList(configured []string, current string) []string {
 // compacted in place (not re-marshaled) so large integer timestamps survive
 // byte-for-byte; describe, the errno table and the host list are small and
 // built by us, so marshaling them fresh is fine.
-func render(tmpl []byte, reportJSON []byte, describe map[string]DescribeEntry, hosts []string, currentHost string) ([]byte, error) {
+func render(tmpl []byte, reportJSON []byte, describe map[string]DescribeEntry, hosts []string, currentHost, signStatus string) ([]byte, error) {
 	var compactReport bytes.Buffer
 	if err := json.Compact(&compactReport, reportJSON); err != nil {
 		return nil, fmt.Errorf("compacting report JSON: %w", err)
@@ -154,6 +157,10 @@ func render(tmpl []byte, reportJSON []byte, describe map[string]DescribeEntry, h
 	if err != nil {
 		return nil, fmt.Errorf("marshaling current host: %w", err)
 	}
+	signStatusJSON, err := json.Marshal(signStatus)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling sign status: %w", err)
+	}
 
 	html := string(tmpl)
 	html = strings.Replace(html, "__REPORT_JSON__", escapeScript(compactReport.Bytes()), 1)
@@ -161,6 +168,7 @@ func render(tmpl []byte, reportJSON []byte, describe map[string]DescribeEntry, h
 	html = strings.Replace(html, "__ERRNO_JSON__", escapeScript(errnoJSON), 1)
 	html = strings.Replace(html, "__HOSTS_JSON__", escapeScript(hostsJSON), 1)
 	html = strings.Replace(html, "__CURRENT_HOST_JSON__", escapeScript(currentHostJSON), 1)
+	html = strings.Replace(html, "__SIGN_STATUS_JSON__", escapeScript(signStatusJSON), 1)
 	return []byte(html), nil
 }
 

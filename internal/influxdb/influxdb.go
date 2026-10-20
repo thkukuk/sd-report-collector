@@ -44,10 +44,12 @@ type reportMetric struct {
 // passed to every sd-report-collector plugin, zstd-compressed or not) into
 // InfluxDB points and writes them to cfg's server, tagged with the report's
 // hostname (taken from reportPath's parent directory, matching how
-// internal/store lays out saved reports). It returns the hostname and the
-// number of points written.
-func Generate(cfg *config.InfluxDBConfig, reportPath string) (string, int, error) {
-	hostname, points, err := buildPoints(reportPath, cfg.ExcludeMetrics)
+// internal/store lays out saved reports) and signStatus, the sign-status
+// sd-report-collector passed as this plugin's first argument ("unsigned",
+// "trusted", "known", or "first-seen"; see internal/verify.Origin). It
+// returns the hostname and the number of points written.
+func Generate(cfg *config.InfluxDBConfig, signStatus, reportPath string) (string, int, error) {
+	hostname, points, err := buildPoints(reportPath, signStatus, cfg.ExcludeMetrics)
 	if err != nil {
 		return "", 0, err
 	}
@@ -72,8 +74,9 @@ func Generate(cfg *config.InfluxDBConfig, reportPath string) (string, int, error
 // buildPoints decompresses and parses reportPath, returning its hostname and
 // one InfluxDB point per metric not matched by exclude, all timestamped with
 // the report's own timestamp (falling back to the current time if the report
-// has none). See matchesAny for exclude's pattern syntax.
-func buildPoints(reportPath string, exclude []string) (string, []*write.Point, error) {
+// has none) and tagged with signStatus. See matchesAny for exclude's pattern
+// syntax.
+func buildPoints(reportPath, signStatus string, exclude []string) (string, []*write.Point, error) {
 	compressed, err := os.ReadFile(reportPath)
 	if err != nil {
 		return "", nil, fmt.Errorf("reading %s: %w", reportPath, err)
@@ -105,7 +108,7 @@ func buildPoints(reportPath string, exclude []string) (string, []*write.Point, e
 		if m.Name == "" || matchesAny(m.Name, exclude) || !scalarValue(m.Value) {
 			continue
 		}
-		points = append(points, metricPoint(m, hostname, timestamp))
+		points = append(points, metricPoint(m, hostname, signStatus, timestamp))
 	}
 	return hostname, points, nil
 }
@@ -142,14 +145,17 @@ func matchesAny(name string, patterns []string) bool {
 }
 
 // metricPoint turns one report metric into an InfluxDB point: the metric
-// family name as measurement, "host" (and "object", if any) plus the
-// metric's own label fields as tags, and the value under a single "value"
-// field. The report's reportID is deliberately not stored anywhere here: it
-// is unique per upload, and tagging points with it would explode series
-// cardinality for no benefit.
-func metricPoint(m reportMetric, hostname string, timestamp time.Time) *write.Point {
-	tags := make(map[string]string, len(m.Fields)+2)
+// family name as measurement, "host", "sign_status" (and "object", if any)
+// plus the metric's own label fields as tags, and the value under a single
+// "value" field. The report's reportID is deliberately not stored anywhere
+// here: it is unique per upload, and tagging points with it would explode
+// series cardinality for no benefit.
+func metricPoint(m reportMetric, hostname, signStatus string, timestamp time.Time) *write.Point {
+	tags := make(map[string]string, len(m.Fields)+3)
 	tags["host"] = hostname
+	if signStatus != "" {
+		tags["sign_status"] = signStatus
+	}
 	if m.Object != "" {
 		tags["object"] = m.Object
 	}

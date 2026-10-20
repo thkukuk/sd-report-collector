@@ -53,7 +53,7 @@ func TestBuildPointsFromUncompressedReport(t *testing.T) {
 	reportsDir := t.TempDir()
 	reportPath := writeUncompressedReport(t, reportsDir, "plainhost", body)
 
-	hostname, points, err := buildPoints(reportPath, nil)
+	hostname, points, err := buildPoints(reportPath, "unsigned", nil)
 	if err != nil {
 		t.Fatalf("buildPoints: %v", err)
 	}
@@ -74,7 +74,7 @@ func TestBuildPointsFromFixtureReport(t *testing.T) {
 	reportsDir := t.TempDir()
 	reportPath := writeCompressedReport(t, reportsDir, "myhost", body)
 
-	hostname, points, err := buildPoints(reportPath, nil)
+	hostname, points, err := buildPoints(reportPath, "trusted", nil)
 	if err != nil {
 		t.Fatalf("buildPoints: %v", err)
 	}
@@ -93,6 +93,15 @@ func TestBuildPointsFromFixtureReport(t *testing.T) {
 		if !p.Time().Equal(wantTime) {
 			t.Fatalf("point %s timestamp = %v, want %v", p.Name(), p.Time(), wantTime)
 		}
+		tagValue := ""
+		for _, tag := range p.TagList() {
+			if tag.Key == "sign_status" {
+				tagValue = tag.Value
+			}
+		}
+		if tagValue != "trusted" {
+			t.Fatalf("point %s sign_status tag = %q, want %q", p.Name(), tagValue, "trusted")
+		}
 	}
 }
 
@@ -104,7 +113,7 @@ func TestBuildPointsFromSignedReport(t *testing.T) {
 	reportsDir := t.TempDir()
 	reportPath := writeCompressedReport(t, reportsDir, "signedhost", body)
 
-	hostname, points, err := buildPoints(reportPath, nil)
+	hostname, points, err := buildPoints(reportPath, "first-seen", nil)
 	if err != nil {
 		t.Fatalf("buildPoints: %v", err)
 	}
@@ -132,7 +141,7 @@ func TestBuildPointsTagsAndFields(t *testing.T) {
 	reportsDir := t.TempDir()
 	reportPath := writeCompressedReport(t, reportsDir, "otherhost", body)
 
-	_, points, err := buildPoints(reportPath, nil)
+	_, points, err := buildPoints(reportPath, "known", nil)
 	if err != nil {
 		t.Fatalf("buildPoints: %v", err)
 	}
@@ -150,6 +159,7 @@ func TestBuildPointsTagsAndFields(t *testing.T) {
 	}
 	want := map[string]string{
 		"host":           "otherhost",
+		"sign_status":    "known",
 		"object":         "/",
 		"source":         "/dev/vda2",
 		"fileSystemType": "btrfs",
@@ -175,7 +185,7 @@ func TestBuildPointsSkipsUnnamedMetrics(t *testing.T) {
 	reportsDir := t.TempDir()
 	reportPath := writeCompressedReport(t, reportsDir, "host", body)
 
-	_, points, err := buildPoints(reportPath, nil)
+	_, points, err := buildPoints(reportPath, "unsigned", nil)
 	if err != nil {
 		t.Fatalf("buildPoints: %v", err)
 	}
@@ -194,7 +204,7 @@ func TestBuildPointsSkipsObjectAndArrayValuedMetrics(t *testing.T) {
 	reportsDir := t.TempDir()
 	reportPath := writeCompressedReport(t, reportsDir, "host", body)
 
-	_, points, err := buildPoints(reportPath, nil)
+	_, points, err := buildPoints(reportPath, "unsigned", nil)
 	if err != nil {
 		t.Fatalf("buildPoints: %v", err)
 	}
@@ -218,7 +228,7 @@ func TestBuildPointsExcludesMatchingMetrics(t *testing.T) {
 	reportPath := writeCompressedReport(t, reportsDir, "host", body)
 
 	exclude := []string{"io.systemd.Manager.*", "io.systemd.Basic.CPUsOnline"}
-	_, points, err := buildPoints(reportPath, exclude)
+	_, points, err := buildPoints(reportPath, "unsigned", exclude)
 	if err != nil {
 		t.Fatalf("buildPoints: %v", err)
 	}

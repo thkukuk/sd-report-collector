@@ -77,6 +77,52 @@ Each `clients/<name>.pem`/`clients/<name>.key` pair needs to be copied to
 the matching client (`myhost` here matches the hostname systemd-report will
 report as).
 
+## Verifying signed reports
+
+`systemd-report upload --sign=` (see `systemd-report-sign-plain(8)`) signs
+each report with a self-generated Ed25519 host key and emits it as a
+JSON-SEQ stream: the report record, followed by a signature record. The
+report record itself also embeds the public key, as the
+`io.systemd.Report.SignPlain.PublicKey` metric. sd-report-collector always
+checks that both copies of the key (embedded in the report, attached to the
+signature) match and that the signature verifies against them; a mismatch or
+bad signature quarantines the report under `QuarantineDirectory` as before
+and logs it as a critical error.
+
+On its own, that only proves the report wasn't altered after signing — not
+that the key belongs to the host it claims to be from, since the key is
+self-generated and travels in the same payload it signs. Anyone who can
+reach the endpoint could mint their own keypair and "sign" a forged report
+for any hostname. To turn verification into an actual identity check,
+sd-report-collector pins each host to a key using three tiers, checked in
+order:
+
+1. **Trusted** — a key file exists at
+   `TrustedKeysDirectory/<hostname>.pem`. This directory is meant to be
+   populated by the administrator, by copying the public key off the client
+   machine over a channel independent of the report upload path (e.g.
+   during provisioning, alongside the mTLS client certificate). This is the
+   only tier that authenticates the sender: an attacker who doesn't control
+   that out-of-band channel cannot make the server accept a different key
+   for that hostname, no matter what it attaches to a forged report.
+2. **Known** — no trusted key exists, but a key was already learned from an
+   earlier report under `KnownKeysDirectory/<hostname>.pem`. The new
+   report's key must match it exactly; a mismatch is treated as a possible
+   key rotation or spoofing attempt and the report is quarantined.
+3. **First seen** — no key exists in either directory yet. The report's own
+   key is accepted trust-on-first-use and saved to
+   `KnownKeysDirectory/<hostname>.pem` for next time.
+
+Tiers 2 and 3 never see an out-of-band comparison, so they only provide
+continuity (the same key signed every report "so far"), not real sender
+authentication — the gap they can't close is a forged report arriving
+*before* the genuine host's first report. Populate `TrustedKeysDirectory`
+for hosts where that gap matters.
+
+Each plugin (see below) is invoked with a new first argument, the
+verification outcome for the report it's about to process: `unsigned`,
+`trusted`, `known`, or `first-seen`.
+
 ## Dashboard plugin
 
 `sd-report-dashboard` is an sd-report-collector plugin that renders a saved
@@ -104,6 +150,14 @@ DescribeFile=/etc/sd-report-dashboard/report.describe
 built-in template and omits per-metric type/description annotations,
 respectively. `DescribeFile` should point at the output of
 `systemd-report describe`.
+
+The dashboard header shows a badge for the report's sign-status (the first
+argument sd-report-collector invokes this plugin with, see "Verifying signed
+reports" above): green "trusted" for a report verified against an
+administrator-provisioned key, yellow/orange for a self-signed report merely
+verified against a key learned from earlier reports ("known"/"first seen"),
+or a muted "Unsigned" badge if the report carried no signature at all.
+Hovering the badge explains what that tier does and doesn't prove.
 
 ![Example Dashboard](screenshots/screenshot.html.png)
 
@@ -134,8 +188,10 @@ and their defaults.
 
 Each metric family becomes an InfluxDB measurement (e.g.
 `io.systemd.Basic.LoadAverage1Min`), with its value written to a single
-`value` field. The report's hostname and the metric's `object` (if any, e.g.
-a unit name, mount point, or device) and label fields (e.g. `type`,
+`value` field. The report's hostname, its sign-status (`sign_status`: the
+same `unsigned`/`trusted`/`known`/`first-seen` value shown on the dashboard,
+see "Verifying signed reports" above), and the metric's `object` (if any,
+e.g. a unit name, mount point, or device) and label fields (e.g. `type`,
 `resource`, `source`) become tags. The report's own report ID is
 intentionally not stored, since it is unique per upload and would otherwise
 explode series cardinality.
@@ -174,4 +230,8 @@ that bucket.
   * ~~by the collector before writing to disk~~ (done: signed reports that
     fail verification are logged as a critical error and saved under
     `QuarantineDirectory` instead of the normal per-host store)
-  * by the plugin and add result to html output
+  * ~~pin per-host keys instead of trusting whatever key a report
+    attaches~~ (done: `TrustedKeysDirectory` / `KnownKeysDirectory`, see
+    "Verifying signed reports" above)
+  * ~~by the plugin and add result to html output~~ (done: the dashboard
+    header shows a badge for the sign-status argument)

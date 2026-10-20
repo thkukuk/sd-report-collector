@@ -1,7 +1,8 @@
 // Command sd-report-dashboard is an sd-report-collector plugin that renders
 // a saved systemd-report as a static HTML dashboard. sd-report-collector
-// invokes it as "sd-report-dashboard <full-path-to-saved-report>" after
-// every report it stores.
+// invokes it as "sd-report-dashboard <sign-status> <full-path-to-saved-report>"
+// after every report it stores. sign-status is one of "unsigned", "trusted",
+// "known", or "first-seen"; see internal/verify.Origin.
 package main
 
 import (
@@ -13,11 +14,12 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		slog.Error("Usage: sd-report-dashboard <path-to-saved-report>")
+	if len(os.Args) != 3 {
+		slog.Error("Usage: sd-report-dashboard <sign-status> <path-to-saved-report>")
 		os.Exit(2)
 	}
-	reportPath := os.Args[1]
+	signStatus := os.Args[1]
+	reportPath := os.Args[2]
 
 	cfg, err := config.LoadDashboard()
 	if err != nil {
@@ -32,9 +34,9 @@ func main() {
 	}
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})))
 
-	slog.Debug("sd-report-dashboard", "report", reportPath)
+	slog.Debug("sd-report-dashboard", "report", reportPath, "sign_status", signStatus)
 
-	outPath, metrics, err := dashboard.Generate(cfg, reportPath)
+	outPath, metrics, err := dashboard.Generate(cfg, signStatus, reportPath)
 	if err != nil {
 		slog.Error("Failed to render dashboard", "report", reportPath, "error", err)
 		os.Exit(1)

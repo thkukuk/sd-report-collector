@@ -223,6 +223,7 @@
       <button class="theme-toggle" id="theme-toggle" type="button">Theme</button>
     </div>
     <div class="right-bottom">
+      <span id="hdr-sign"></span>
       <span id="hdr-state"></span>
       <span id="hdr-uptime"></span>
       <span id="hdr-time"></span>
@@ -284,12 +285,14 @@
 <script id="errno-data" type="application/json">__ERRNO_JSON__</script>
 <script id="hosts-data" type="application/json">__HOSTS_JSON__</script>
 <script id="current-host-data" type="application/json">__CURRENT_HOST_JSON__</script>
+<script id="sign-status-data" type="application/json">__SIGN_STATUS_JSON__</script>
 <script>
 const REPORT = JSON.parse(document.getElementById('report-data').textContent);
 const DESCRIBE = JSON.parse(document.getElementById('describe-data').textContent);
 const ERRNO = JSON.parse(document.getElementById('errno-data').textContent);
 const HOSTS = JSON.parse(document.getElementById('hosts-data').textContent);
 const CURRENT_HOST = JSON.parse(document.getElementById('current-host-data').textContent);
+const SIGN_STATUS = JSON.parse(document.getElementById('sign-status-data').textContent);
 const METRICS = REPORT.metrics || [];
 
 /* ---------- small helpers ---------- */
@@ -393,6 +396,30 @@ function unitType(name) {
 function severityColor(sev) {
   return { good: 'var(--good)', warning: 'var(--warning)', serious: 'var(--serious)', critical: 'var(--critical)' }[sev] || 'var(--series-1)';
 }
+/* sign-status -> badge label/color/tooltip. Only "trusted" (verified against
+ * an administrator-provisioned key) authenticates the sender; "known" and
+ * "first-seen" are self-signed reports sd-report-collector has merely seen
+ * a consistent key for, so far. See internal/verify.Origin. */
+function signBadge(status) {
+  return {
+    'trusted': {
+      label: 'Signed · trusted', sev: 'good',
+      title: 'Verified against an administrator-provisioned key for this host.',
+    },
+    'known': {
+      label: 'Signed · self-signed, known', sev: 'warning',
+      title: 'Verified against the self-generated key this host used in earlier reports. Not independently authenticated.',
+    },
+    'first-seen': {
+      label: 'Signed · self-signed, first seen', sev: 'serious',
+      title: 'First report seen from this host; its self-generated key was just learned (trust-on-first-use). Not independently authenticated.',
+    },
+    'unsigned': {
+      label: 'Unsigned', sev: null,
+      title: 'This report was not cryptographically signed.',
+    },
+  }[status];
+}
 function fillMeter(container, pct, sev, labelName, statText, subText, title) {
   const row = el('div', { class: 'meter-row' });
   if (title) row.title = title;
@@ -420,6 +447,13 @@ function fillMeter(container, pct, sev, labelName, statText, subText, title) {
   const kernel = value1('io.systemd.Basic.KernelVersion') || '';
   const arch = value1('io.systemd.Basic.Architecture') || '';
   document.getElementById('hdr-os').textContent = [osName, osVer, kernel && `kernel ${kernel}`, arch].filter(Boolean).join(' · ');
+
+  const sign = signBadge(SIGN_STATUS);
+  if (sign) {
+    const color = sign.sev ? severityColor(sign.sev) : 'var(--text-muted)';
+    document.getElementById('hdr-sign').innerHTML =
+      `<span class="badge" style="background:${color}" title="${escapeHtml(sign.title)}">${escapeHtml(sign.label)}</span>`;
+  }
 
   const state = value1('io.systemd.Manager.SystemState');
   if (state) {
