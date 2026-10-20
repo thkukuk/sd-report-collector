@@ -1304,15 +1304,15 @@
           "min": 0,
           "max": 100,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 75 
+                "color": "orange",
+                "value": 70
               },
               {
                 "color": "red",
@@ -1343,7 +1343,7 @@
       "title": "Disk Space by Mount",
       "type": "bargauge",
       "options": {
-        "displayMode": "basic",
+        "displayMode": "gradient",
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
@@ -1801,7 +1801,7 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => (r._measurement == \"io.systemd.Network.Address\" or r._measurement == \"org.openSUSE.Metrics.Network.Address\") and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> keep(columns: [\"object\", \"family\", \"scope\", \"_value\"])\n  |> rename(columns: {object: \"interface\", _value: \"address\"})\n  |> sort(columns: [\"interface\", \"family\"])",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => (r._measurement == \"io.systemd.Network.Address\" or r._measurement == \"org.openSUSE.Metrics.Network.Address\") and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> group()\n  |> keep(columns: [\"object\", \"_value\", \"scope\"])\n  |> rename(columns: {object: \"interface\", _value: \"address\"})\n  |> sort(columns: [\"interface\"])",
           "refId": "A"
         }
       ],
@@ -1838,7 +1838,7 @@
             "type": "influxdb",
             "uid": "${DS_INFLUXDB}"
           },
-          "query": "mtu = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.MTU\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"mtu\")\n\nspeed_bps = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.SpeedBitsPerSecond\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"speed_bps\")\n\nqueue_length = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.TransmitQueueLength\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"queue_length\")\n\ncollisions = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.Collisions\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"collisions\")\n\ncarrier_changes = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.CarrierChanges\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"carrier_changes\")\n\nunion(tables: [mtu, speed_bps, queue_length, collisions, carrier_changes])\n  |> pivot(rowKey: [\"object\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> rename(columns: {object: \"interface\"})\n  |> sort(columns: [\"interface\"])",
+          "query": "collisions = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.Collisions\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"collisions\")\n\nqueue_length = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.TransmitQueueLength\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"queue_length\")\n\ncarrier_changes = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.CarrierChanges\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"carrier_changes\")\n\nmtu = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.NetworkStatistics.MTU\" and r._field == \"value\" and r.host == \"${host}\" and r.object != \"lo\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"mtu\")\n\nunion(tables: [collisions, queue_length, carrier_changes, mtu])\n  |> pivot(rowKey: [\"object\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> group()\n  |> rename(columns: {object: \"interface\"})\n  |> sort(columns: [\"interface\"])",
           "refId": "A"
         }
       ],
