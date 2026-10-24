@@ -688,6 +688,50 @@ function kv(container, label, val, title) {
     }
   }
 
+  // Battery (UPower)
+  {
+    function battValue(name, object) {
+      const m = METRICS.find(x => x.name === name && x.object === object);
+      return m ? m.value : undefined;
+    }
+    const batteries = [...new Set(
+      METRICS.filter(m => m.name.startsWith('org.openSUSE.Metrics.UPower.Battery.') && m.object).map(m => m.object)
+    )].sort();
+    batteries.forEach(batt => {
+      const vendor = battValue('org.openSUSE.Metrics.UPower.Battery.Vendor', batt);
+      const model = battValue('org.openSUSE.Metrics.UPower.Battery.Model', batt);
+      const title = [vendor, model].filter(Boolean).join(' ');
+
+      const c = el('div', { class: 'card' });
+      c.appendChild(el('h3', { text: title ? `Battery: ${batt} — ${title}` : `Battery: ${batt}` }));
+
+      const state = battValue('org.openSUSE.Metrics.UPower.Battery.State', batt);
+      const charge = battValue('org.openSUSE.Metrics.UPower.Battery.Charge', batt);
+      if (charge != null) {
+        const sev = charge < 15 ? 'critical' : charge < 30 ? 'warning' : 'good';
+        fillMeter(c, charge, sev, 'Charge', charge.toFixed(0) + ' %', state || null,
+          desc('org.openSUSE.Metrics.UPower.Battery.Charge'));
+      } else {
+        kv(c, 'State', state, desc('org.openSUSE.Metrics.UPower.Battery.State'));
+      }
+
+      kv(c, 'Vendor', vendor, desc('org.openSUSE.Metrics.UPower.Battery.Vendor'));
+      kv(c, 'Model', model, desc('org.openSUSE.Metrics.UPower.Battery.Model'));
+
+      const energy = battValue('org.openSUSE.Metrics.UPower.Battery.Energy', batt);
+      const energyFull = battValue('org.openSUSE.Metrics.UPower.Battery.EnergyFull', batt);
+      const energyDesign = battValue('org.openSUSE.Metrics.UPower.Battery.EnergyDesign', batt);
+      kv(c, 'Energy', energy != null ? energy.toFixed(2) + ' Wh' : null, desc('org.openSUSE.Metrics.UPower.Battery.Energy'));
+      kv(c, 'Energy (full)', energyFull != null ? energyFull.toFixed(2) + ' Wh' : null, desc('org.openSUSE.Metrics.UPower.Battery.EnergyFull'));
+      kv(c, 'Energy (design)', energyDesign != null ? energyDesign.toFixed(2) + ' Wh' : null, desc('org.openSUSE.Metrics.UPower.Battery.EnergyDesign'));
+      if (energyFull != null && energyDesign) {
+        kv(c, 'Battery health', (energyFull / energyDesign * 100).toFixed(0) + ' % of design capacity');
+      }
+
+      grid.appendChild(c);
+    });
+  }
+
   // Pressure (PSI)
   {
     const combos = [];
