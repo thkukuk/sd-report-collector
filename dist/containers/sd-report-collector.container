@@ -1,0 +1,35 @@
+# Example podman quadlet for sd-report-collector.
+#
+# Install into /etc/containers/systemd/ (system-wide) or
+# ~/.config/containers/systemd/ (rootless), then:
+#   systemctl daemon-reload
+#   systemctl start sd-report-collector.service
+#
+# The container ships its own default config at
+# /usr/lib/sd-report-collector/sd-report-collector.conf, which is merged
+# (per UAPI.6) with whatever is found under /etc/sd-report-collector below.
+# Place sd-report-collector.conf and/or sd-report-collector.conf.d/*.conf
+# there to override settings, e.g. to point ServerCertificateFile,
+# ServerKeyFile and ClientCAFile at paths under /etc/sd-report-collector so
+# they are covered by the same volume.
+
+[Unit]
+Description=systemd-report mTLS collecting server (container)
+
+[Container]
+Image=docker.io/thkukuk/sd-report-collector:latest
+ContainerName=sd-report-collector
+PublishPort=8443:8443
+
+# Configuration, drop-ins, TLS material and trusted client keys.
+Volume=/etc/sd-report-collector:/etc/sd-report-collector:Z
+
+# Persistent data: saved reports, quarantined reports, dashboards and the
+# trust-on-first-use known-keys store.
+Volume=/var/lib/sd-report-collector:/var/lib/sd-report-collector:Z
+
+[Service]
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target default.target
