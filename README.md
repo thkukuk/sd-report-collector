@@ -223,15 +223,3 @@ that bucket.
 ![Example Grafana Dashboard 1](screenshots/grafana-dashboard-1.png)
 ![Example Grafana Dashboard 2](screenshots/grafana-dashboard-2.png)
 ![Example Grafana Dashboard 3](screenshots/grafana-dashboard-3.png)
-
-## Todo
-
-* Verify the report signature
-  * ~~by the collector before writing to disk~~ (done: signed reports that
-    fail verification are logged as a critical error and saved under
-    `QuarantineDirectory` instead of the normal per-host store)
-  * ~~pin per-host keys instead of trusting whatever key a report
-    attaches~~ (done: `TrustedKeysDirectory` / `KnownKeysDirectory`, see
-    "Verifying signed reports" above)
-  * ~~by the plugin and add result to html output~~ (done: the dashboard
-    header shows a badge for the sign-status argument)
