@@ -1213,7 +1213,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 70
+        "y": 79
       },
       "id": 13,
       "panels": [],
@@ -1246,7 +1246,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 71
+        "y": 80
       },
       "id": 14,
       "targets": [
@@ -1283,7 +1283,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 45
       },
       "id": 15,
       "panels": [],
@@ -1327,7 +1327,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 37
+        "y": 46
       },
       "id": 16,
       "targets": [
@@ -1381,7 +1381,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 37
+        "y": 46
       },
       "id": 17,
       "targets": [
@@ -1426,7 +1426,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 79
+        "y": 88
       },
       "id": 18,
       "panels": [],
@@ -1459,7 +1459,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 80
+        "y": 89
       },
       "id": 19,
       "targets": [
@@ -1513,7 +1513,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 80
+        "y": 89
       },
       "id": 20,
       "targets": [
@@ -1567,7 +1567,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 80
+        "y": 89
       },
       "id": 21,
       "targets": [
@@ -1605,7 +1605,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 88
+        "y": 97
       },
       "id": 22,
       "panels": [],
@@ -1630,7 +1630,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 89
+        "y": 98
       },
       "id": 23,
       "targets": [
@@ -1668,7 +1668,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 89
+        "y": 98
       },
       "id": 24,
       "targets": [
@@ -1705,7 +1705,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 97
+        "y": 106
       },
       "id": 25,
       "targets": [
@@ -1742,7 +1742,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 97
+        "y": 106
       },
       "id": 26,
       "targets": [
@@ -1768,7 +1768,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 54
       },
       "id": 200,
       "panels": [],
@@ -1792,7 +1792,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 46
+        "y": 55
       },
       "id": 201,
       "targets": [
@@ -1829,7 +1829,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 46
+        "y": 55
       },
       "id": 202,
       "targets": [
@@ -1875,7 +1875,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 54
+        "y": 63
       },
       "id": 203,
       "targets": [
@@ -1940,7 +1940,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 54
+        "y": 63
       },
       "id": 204,
       "targets": [
@@ -2013,7 +2013,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 62
+        "y": 71
       },
       "id": 205,
       "targets": [
@@ -2074,7 +2074,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 105
+        "y": 114
       },
       "id": 300,
       "panels": [],
@@ -2122,7 +2122,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 106
+        "y": 115
       },
       "id": 303,
       "targets": [
@@ -2193,7 +2193,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 110
+        "y": 119
       },
       "id": 304,
       "targets": [
@@ -2249,7 +2249,7 @@
         "h": 8,
         "w": 10,
         "x": 4,
-        "y": 106
+        "y": 115
       },
       "id": 301,
       "targets": [
@@ -2286,7 +2286,7 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 106
+        "y": 115
       },
       "id": 302,
       "targets": [
@@ -2300,6 +2300,124 @@
         }
       ],
       "title": "SELinux Policy Booleans",
+      "type": "table",
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "id": 400,
+      "panels": [],
+      "title": "Battery",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 37
+      },
+      "id": 401,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.Metrics.UPower.Battery.Charge\" and r._field == \"value\" and r.host == \"${host}\")\n  |> map(fn: (r) => ({ r with _field: r.object }))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Battery Charge",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "id": 402,
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "vendor = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.Metrics.UPower.Battery.Vendor\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> map(fn: (r) => ({ r with _value: display(v: r._value) }))\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"vendor\")\n\nmodel = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.Metrics.UPower.Battery.Model\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> map(fn: (r) => ({ r with _value: display(v: r._value) }))\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"model\")\n\nstate = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.Metrics.UPower.Battery.State\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> map(fn: (r) => ({ r with _value: display(v: r._value) }))\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"state\")\n\ncharge = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.Metrics.UPower.Battery.Charge\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> map(fn: (r) => ({ r with _value: display(v: r._value) + \" %\" }))\n  |> keep(columns: [\"object\", \"_value\"])\n  |> set(key: \"_field\", value: \"charge\")\n\nenergy_full = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.Metrics.UPower.Battery.EnergyFull\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n\nenergy_design = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"org.openSUSE.Metrics.UPower.Battery.EnergyDesign\" and r._field == \"value\" and r.host == \"${host}\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n\nhealth = join(tables: {full: energy_full, design: energy_design}, on: [\"object\"])\n  |> map(fn: (r) => ({ object: r.object, _value: display(v: 100.0 * r._value_full / r._value_design) + \" %\" }))\n  |> set(key: \"_field\", value: \"health\")\n\nunion(tables: [vendor, model, state, charge, health])\n  |> pivot(rowKey: [\"object\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> group()\n  |> rename(columns: {object: \"battery\"})\n  |> sort(columns: [\"battery\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Battery Info",
       "type": "table",
       "options": {
         "showHeader": true,
@@ -2354,6 +2472,6 @@
   "timezone": "",
   "title": "systemd-report",
   "uid": "sd-report-collector",
-  "version": 9,
+  "version": 10,
   "weekStart": ""
 }
