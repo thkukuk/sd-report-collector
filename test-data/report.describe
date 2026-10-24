@@ -175,6 +175,15 @@ io.systemd.Manager.UnitsTotal                                    gauge   Total n
 io.systemd.Manager.UserspaceTimestamp.Monotonic                  gauge   CLOCK_MONOTONIC microseconds at which userspace was reached
 io.systemd.Manager.UserspaceTimestamp.Realtime                   gauge   CLOCK_REALTIME microseconds at which userspace was reached
 io.systemd.Manager.Version                                       string  Version of systemd
+io.systemd.Network.Address                                       string  Per interface metric: configured IP address in CIDR notation
+io.systemd.Network.AddressState                                  string  Per interface metric: address state
+io.systemd.Network.AdministrativeState                           string  Per interface metric: administrative state
+io.systemd.Network.CarrierState                                  string  Per interface metric: carrier state
+io.systemd.Network.IPv4AddressState                              string  Per interface metric: IPv4 address state
+io.systemd.Network.IPv6AddressState                              string  Per interface metric: IPv6 address state
+io.systemd.Network.ManagedInterfaces                             gauge   Number of network interfaces managed by systemd-networkd
+io.systemd.Network.OperationalState                              string  Per interface metric: operational state
+io.systemd.Network.RequiredForOnline                             string  Per interface metric: required operational state for online, or 'no' if not required
 io.systemd.NetworkStatistics.CarrierChanges                      counter Per interface metric: number of times the carrier state changed (object=interface name, ifindex=interface index, type=interface type, kind=interface kind)
 io.systemd.NetworkStatistics.Collisions                          counter Per interface metric: number of collisions during packet transmission
 io.systemd.NetworkStatistics.MTU                                 gauge   Per interface metric: maximum transmission unit in bytes
@@ -189,6 +198,10 @@ io.systemd.NetworkStatistics.TransmitDropped                     counter Per int
 io.systemd.NetworkStatistics.TransmitErrors                      counter Per interface metric: number of transmit errors
 io.systemd.NetworkStatistics.TransmitPackets                     counter Per interface metric: number of packets transmitted
 io.systemd.NetworkStatistics.TransmitQueueLength                 gauge   Per interface metric: transmit queue length in packets
+org.openSUSE.Metrics.Network.Address                             string  Per interface metric: configured IP address in CIDR notation
+org.openSUSE.Metrics.Network.DeviceState                         string  Per interface metric: state of network device
+org.openSUSE.Metrics.Network.ManagedInterfaces                   gauge   Number of network interfaces managed by systemd-networkd
+org.openSUSE.Metrics.Packages                                    string  Installed Package
 org.openSUSE.Metrics.SELinux.CheckReqProt                        string  SELinux Memory protection checking
 org.openSUSE.Metrics.SELinux.ConfigfileMode                      string  SELinux mode from config file
 org.openSUSE.Metrics.SELinux.MaxKernelPolicyVersion              gauge   Max kernel policy version
@@ -200,6 +213,14 @@ org.openSUSE.Metrics.SELinux.PolicyMLS                           string  SELinux
 org.openSUSE.Metrics.SELinux.PolicyRPMVersion                    string  Version of selinux-policy RPM
 org.openSUSE.Metrics.SELinux.RootDir                             string  SELinux root directory
 org.openSUSE.Metrics.SELinux.Status                              string  SELinux Status (enabled/disabled)
+org.openSUSE.Metrics.UPower.Battery.Charge                       string  Battery Charge Percentage
+org.openSUSE.Metrics.UPower.Battery.Count                        gauge   Number of batteries
+org.openSUSE.Metrics.UPower.Battery.Energy                       string  Battery Energy in Wh
+org.openSUSE.Metrics.UPower.Battery.EnergyDesign                 string  Full Battery Energy (Design) in Wh
+org.openSUSE.Metrics.UPower.Battery.EnergyFull                   string  Full Battery Energy in Wh
+org.openSUSE.Metrics.UPower.Battery.Model                        string  Battery Model
+org.openSUSE.Metrics.UPower.Battery.State                        string  Battery State
+org.openSUSE.Metrics.UPower.Battery.Vendor                       string  Battery Vendor
 org.openSUSE.Metrics.Version                                     string  Version of metrics-exporter
 org.openSUSE.rebootmgr.MaintenanceWindowDuration                 gauge   Duration of the configured maintenance window in seconds
 org.openSUSE.rebootmgr.MaintenanceWindowStart                    string  Start of the configured maintenance window as calendar specification
@@ -211,4 +232,4 @@ org.openSUSE.rebootmgr.RebootStatus                              string  Whether
 org.openSUSE.rebootmgr.RebootStrategy                            string  Currently configured reboot strategy
 org.openSUSE.rebootmgr.Version                                   string  Version of rebootmgr
 
-211 metrics listed.
+232 metrics listed.
