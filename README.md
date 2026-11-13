@@ -7,8 +7,8 @@ per-hostname directory, and runs configured plugins against the saved file.
 
 ## Build
 
-Requires `libeconf` development headers (`libeconf-devel` / `libeconf-dev`)
-and a C compiler, since configuration parsing uses cgo bindings to libeconf.
+Requires only a Go toolchain; configuration parsing uses libeconf's native
+Go package, with no cgo or C library dependency.
 
 ```
 meson setup build

@@ -5,6 +5,7 @@ go 1.27.1
 require (
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
 	github.com/klauspost/compress v1.20.3
+	github.com/openSUSE/libeconf/go/econf v0.0.0-20261111102138-301ef79a89d9
 )
 
 require (
@@ -14,3 +15,5 @@ require (
 	github.com/oapi-codegen/runtime v1.8.0 // indirect
 	golang.org/x/net v0.61.0 // indirect
 )
+
+replace github.com/openSUSE/libeconf/go/econf => github.com/openSUSE/libeconf/go/native/econf v0.0.0-20261111102138-301ef79a89d9

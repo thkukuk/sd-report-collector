@@ -1,88 +1,50 @@
 // Package config reads sd-report-collector's configuration following the UAPI.6
-// Configuration Files Specification, via the libeconf C library.
+// Configuration Files Specification, via libeconf's native Go package.
 package config
-
-/*
-#cgo pkg-config: libeconf
-#include <libeconf.h>
-#include <stdlib.h>
-*/
-import "C"
 
 import (
 	"errors"
 	"fmt"
 	"sort"
-	"unsafe"
+
+	"github.com/openSUSE/libeconf/go/econf"
 )
 
 // ErrNoConfigFile is returned by readConfig when no configuration file was
 // found anywhere in the UAPI.6 search path.
 var ErrNoConfigFile = errors.New("no configuration file found")
 
-// keyFile wraps a parsed econf_file, merged across the UAPI.6 hierarchy.
+// keyFile wraps a parsed econf.File, merged across the UAPI.6 hierarchy.
 type keyFile struct {
-	ptr *C.econf_file
-}
-
-func econfError(rc C.econf_err) error {
-	if rc == C.ECONF_SUCCESS {
-		return nil
-	}
-	return fmt.Errorf("libeconf: %s", C.GoString(C.econf_errString(rc)))
+	f *econf.File
 }
 
 // readConfig loads and merges "<project>/<configName>.<configSuffix>" from
 // /usr/lib (usrSubdir), /run and /etc, including ".d" drop-ins, per UAPI.6.
 func readConfig(project, usrSubdir, configName, configSuffix string) (*keyFile, error) {
-	cProject := C.CString(project)
-	defer C.free(unsafe.Pointer(cProject))
-	cUsrSubdir := C.CString(usrSubdir)
-	defer C.free(unsafe.Pointer(cUsrSubdir))
-	cConfigName := C.CString(configName)
-	defer C.free(unsafe.Pointer(cConfigName))
-	cConfigSuffix := C.CString(configSuffix)
-	defer C.free(unsafe.Pointer(cConfigSuffix))
-	cDelim := C.CString("=")
-	defer C.free(unsafe.Pointer(cDelim))
-	cComment := C.CString("#")
-	defer C.free(unsafe.Pointer(cComment))
-
-	var kf *C.econf_file
-	rc := C.econf_readConfig(&kf, cProject, cUsrSubdir, cConfigName, cConfigSuffix, cDelim, cComment)
-	if rc == C.ECONF_NOFILE {
+	f, err := econf.ReadConfig(project, usrSubdir, configName, configSuffix, "=", "#")
+	if errors.Is(err, econf.ErrNoFile) {
 		return nil, ErrNoConfigFile
 	}
-	if rc != C.ECONF_SUCCESS {
-		return nil, econfError(rc)
+	if err != nil {
+		return nil, fmt.Errorf("libeconf: %w", err)
 	}
-	return &keyFile{ptr: kf}, nil
+	return &keyFile{f: f}, nil
 }
 
 // readFile parses a single config file directly (bypassing the UAPI.6
 // hierarchy search), for use in tests where rooting real /usr, /run, /etc
 // trees isn't practical.
 func readFile(path string) (*keyFile, error) {
-	cPath := C.CString(path)
-	defer C.free(unsafe.Pointer(cPath))
-	cDelim := C.CString("=")
-	defer C.free(unsafe.Pointer(cDelim))
-	cComment := C.CString("#")
-	defer C.free(unsafe.Pointer(cComment))
-
-	var kf *C.econf_file
-	rc := C.econf_readFile(&kf, cPath, cDelim, cComment)
-	if rc != C.ECONF_SUCCESS {
-		return nil, econfError(rc)
+	f, err := econf.ReadFile(path, "=", "#")
+	if err != nil {
+		return nil, fmt.Errorf("libeconf: %w", err)
 	}
-	return &keyFile{ptr: kf}, nil
+	return &keyFile{f: f}, nil
 }
 
 func (k *keyFile) Close() {
-	if k.ptr != nil {
-		C.econf_freeFile(k.ptr)
-		k.ptr = nil
-	}
+	_ = k.f.Close()
 }
 
 // getString returns the string value for group/key, or def if absent.
@@ -95,20 +57,14 @@ func (k *keyFile) getString(group, key, def string) (string, error) {
 // was actually present in that group (as opposed to def being returned
 // because it was absent).
 func (k *keyFile) getStringIn(group, key, def string) (string, bool, error) {
-	cGroup := C.CString(group)
-	defer C.free(unsafe.Pointer(cGroup))
-	cKey := C.CString(key)
-	defer C.free(unsafe.Pointer(cKey))
-	cDef := C.CString(def)
-	defer C.free(unsafe.Pointer(cDef))
-
-	var result *C.char
-	rc := C.econf_getStringValueDef(k.ptr, cGroup, cKey, &result, cDef)
-	if rc != C.ECONF_SUCCESS && rc != C.ECONF_NOKEY {
-		return "", false, econfError(rc)
+	val, err := k.f.StringDef(group, key, def)
+	if errors.Is(err, econf.ErrNoKey) {
+		return val, false, nil
 	}
-	defer C.free(unsafe.Pointer(result))
-	return C.GoString(result), rc == C.ECONF_SUCCESS, nil
+	if err != nil {
+		return "", false, fmt.Errorf("libeconf: %w", err)
+	}
+	return val, true, nil
 }
 
 // getStringFallback looks up key in each of groups in order, returning the
@@ -128,55 +84,38 @@ func (k *keyFile) getStringFallback(groups []string, key, def string) (string, e
 
 // getInt returns the int value for group/key, or def if absent.
 func (k *keyFile) getInt(group, key string, def int64) (int64, error) {
-	cGroup := C.CString(group)
-	defer C.free(unsafe.Pointer(cGroup))
-	cKey := C.CString(key)
-	defer C.free(unsafe.Pointer(cKey))
-
-	var result C.int64_t
-	rc := C.econf_getInt64ValueDef(k.ptr, cGroup, cKey, &result, C.int64_t(def))
-	if rc != C.ECONF_SUCCESS && rc != C.ECONF_NOKEY {
-		return 0, econfError(rc)
+	val, err := k.f.Int64Def(group, key, def)
+	if errors.Is(err, econf.ErrNoKey) {
+		return val, nil
 	}
-	return int64(result), nil
+	if err != nil {
+		return 0, fmt.Errorf("libeconf: %w", err)
+	}
+	return val, nil
 }
 
 // getBool returns the bool value for group/key, or def if absent.
 func (k *keyFile) getBool(group, key string, def bool) (bool, error) {
-	cGroup := C.CString(group)
-	defer C.free(unsafe.Pointer(cGroup))
-	cKey := C.CString(key)
-	defer C.free(unsafe.Pointer(cKey))
-
-	result := C.bool(def)
-	rc := C.econf_getBoolValueDef(k.ptr, cGroup, cKey, &result, C.bool(def))
-	if rc != C.ECONF_SUCCESS && rc != C.ECONF_NOKEY {
-		return false, econfError(rc)
+	val, err := k.f.BoolDef(group, key, def)
+	if errors.Is(err, econf.ErrNoKey) {
+		return val, nil
 	}
-	return bool(result), nil
+	if err != nil {
+		return false, fmt.Errorf("libeconf: %w", err)
+	}
+	return val, nil
 }
 
 // getKeys returns the sorted key names of the given group. An absent group
 // yields an empty slice, not an error.
 func (k *keyFile) getKeys(group string) ([]string, error) {
-	cGroup := C.CString(group)
-	defer C.free(unsafe.Pointer(cGroup))
-
-	var length C.size_t
-	var keys **C.char
-	rc := C.econf_getKeys(k.ptr, cGroup, &length, &keys)
-	if rc == C.ECONF_NOGROUP || rc == C.ECONF_NOKEY {
+	keys, err := k.f.Keys(group)
+	if errors.Is(err, econf.ErrNoGroup) || errors.Is(err, econf.ErrNoKey) {
 		return nil, nil
 	}
-	if rc != C.ECONF_SUCCESS {
-		return nil, econfError(rc)
+	if err != nil {
+		return nil, fmt.Errorf("libeconf: %w", err)
 	}
-	defer C.econf_freeArray(keys)
-
-	result := make([]string, 0, int(length))
-	for _, cstr := range unsafe.Slice(keys, int(length)) {
-		result = append(result, C.GoString(cstr))
-	}
-	sort.Strings(result)
-	return result, nil
+	sort.Strings(keys)
+	return keys, nil
 }
