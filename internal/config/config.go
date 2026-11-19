@@ -64,7 +64,6 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer kf.Close()
 
 	cfg := defaults()
 

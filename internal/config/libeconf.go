@@ -43,10 +43,6 @@ func readFile(path string) (*keyFile, error) {
 	return &keyFile{f: f}, nil
 }
 
-func (k *keyFile) Close() {
-	_ = k.f.Close()
-}
-
 // getString returns the string value for group/key, or def if absent.
 func (k *keyFile) getString(group, key, def string) (string, error) {
 	val, _, err := k.getStringIn(group, key, def)
