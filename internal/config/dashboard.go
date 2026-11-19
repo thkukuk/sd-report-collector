@@ -36,7 +36,6 @@ func LoadDashboard() (*DashboardConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer kf.Close()
 
 	cfg := dashboardDefaults()
 
