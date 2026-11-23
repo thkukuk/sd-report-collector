@@ -138,8 +138,10 @@ func Init(baseDir string, extraSANs []string, force bool) error {
 
 // Client generates a certificate/key for the given client name, signed by
 // the CA created by Init, and stores it under baseDir/clients. name becomes
-// both the certificate's CommonName and its only DNS SAN, matching how the
-// server derives the report-storage hostname from client certificates.
+// both the certificate's CommonName and its only SAN (as a DNS name, or as
+// an IP address SAN if name parses as one), matching how the server derives
+// the report-storage hostname from client certificates: it reads the
+// CommonName, whichever form name took.
 func Client(baseDir, name string, force bool) error {
 	if err := validateName(name); err != nil {
 		return err

@@ -93,10 +93,11 @@ certificate (see above) — plan for reissuing all `client` certificates
 alongside any SAN change made this way.
 Each `clients/<name>.pem`/`clients/<name>.key` pair needs to be copied to
 the matching client (`myhost` here matches the hostname systemd-report will
-report as), into the same `/etc/sd-report-collector/clients/` path as on the
-server, alongside a copy of `ca.pem` at `/etc/sd-report-collector/ca.pem`
-(used to verify the server's certificate); see the "Client" steps under
-Quickstart above.
+report as — this can be an IP address instead, e.g. `sd-report-certs client
+192.168.122.80`, if that's how the client identifies itself), into the same
+`/etc/sd-report-collector/clients/` path as on the server, alongside a copy
+of `ca.pem` at `/etc/sd-report-collector/ca.pem` (used to verify the
+server's certificate); see the "Client" steps under Quickstart above.
 
 ## Verifying signed reports
 
