@@ -3,8 +3,11 @@ package certgen
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
+	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -12,7 +15,7 @@ import (
 func TestInitAndClientProduceUsableMTLSMaterial(t *testing.T) {
 	baseDir := t.TempDir()
 
-	if err := Init(baseDir, false); err != nil {
+	if err := Init(baseDir, nil, false); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	for _, f := range []string{"ca.pem", "ca.key", "server.pem", "server.key", "sd-report-collector.conf.d/certgen.conf"} {
@@ -80,14 +83,49 @@ func TestInitAndClientProduceUsableMTLSMaterial(t *testing.T) {
 func TestInitRefusesToOverwriteWithoutForce(t *testing.T) {
 	baseDir := t.TempDir()
 
-	if err := Init(baseDir, false); err != nil {
+	if err := Init(baseDir, nil, false); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
-	if err := Init(baseDir, false); err == nil {
+	if err := Init(baseDir, nil, false); err == nil {
 		t.Fatal("expected second Init without --force to fail")
 	}
-	if err := Init(baseDir, true); err != nil {
+	if err := Init(baseDir, nil, true); err != nil {
 		t.Fatalf("Init with --force: %v", err)
+	}
+}
+
+func TestInitAddsExtraSANsToServerCertificate(t *testing.T) {
+	baseDir := t.TempDir()
+
+	if err := Init(baseDir, []string{"report.example.com", "192.168.3.16"}, false); err != nil {
+		t.Fatalf("Init: %v", err)
+	}
+
+	certPEM, err := os.ReadFile(filepath.Join(baseDir, "server.pem"))
+	if err != nil {
+		t.Fatalf("reading server certificate: %v", err)
+	}
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		t.Fatal("failed to decode server certificate PEM")
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		t.Fatalf("parsing server certificate: %v", err)
+	}
+
+	if !slices.Contains(cert.DNSNames, "report.example.com") {
+		t.Errorf("expected DNSNames to contain %q, got %v", "report.example.com", cert.DNSNames)
+	}
+	wantIP := net.ParseIP("192.168.3.16")
+	found := false
+	for _, ip := range cert.IPAddresses {
+		if ip.Equal(wantIP) {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected IPAddresses to contain %v, got %v", wantIP, cert.IPAddresses)
 	}
 }
 
@@ -102,7 +140,7 @@ func TestClientRequiresInitFirst(t *testing.T) {
 func TestClientRefusesToOverwriteWithoutForce(t *testing.T) {
 	baseDir := t.TempDir()
 
-	if err := Init(baseDir, false); err != nil {
+	if err := Init(baseDir, nil, false); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	if err := Client(baseDir, "somehost", false); err != nil {
@@ -118,7 +156,7 @@ func TestClientRefusesToOverwriteWithoutForce(t *testing.T) {
 
 func TestClientRejectsInvalidNames(t *testing.T) {
 	baseDir := t.TempDir()
-	if err := Init(baseDir, false); err != nil {
+	if err := Init(baseDir, nil, false); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 

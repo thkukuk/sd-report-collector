@@ -49,10 +49,14 @@ ClientCAFile=%s
 `
 
 // Init (re)generates the CA and the server certificate/key under baseDir.
+// The server certificate's SAN list always includes the machine's hostname
+// and "localhost"; extraSANs adds any further hostnames or IP addresses
+// clients may use to reach the server (e.g. when connecting by IP, since
+// TLS only accepts addresses listed as SANs, never the CommonName).
 // It refuses to overwrite an existing CA or server certificate unless force
 // is set, since regenerating the CA invalidates every certificate signed by
 // the previous one.
-func Init(baseDir string, force bool) error {
+func Init(baseDir string, extraSANs []string, force bool) error {
 	if err := os.MkdirAll(baseDir, dirMode); err != nil {
 		return fmt.Errorf("creating %s: %w", baseDir, err)
 	}
@@ -111,7 +115,8 @@ func Init(baseDir string, force bool) error {
 	if err != nil {
 		hostname = "localhost"
 	}
-	if err := issueCert(caCert, caKey, serverCertPath, serverKeyPath, hostname, []string{hostname, "localhost"}, x509.ExtKeyUsageServerAuth, force); err != nil {
+	sans := append([]string{hostname, "localhost"}, extraSANs...)
+	if err := issueCert(caCert, caKey, serverCertPath, serverKeyPath, hostname, sans, x509.ExtKeyUsageServerAuth, force); err != nil {
 		return err
 	}
 
@@ -167,7 +172,7 @@ func Client(baseDir, name string, force bool) error {
 	return nil
 }
 
-func issueCert(caCert *x509.Certificate, caKey *rsa.PrivateKey, certPath, keyPath, commonName string, dnsNames []string, extKeyUsage x509.ExtKeyUsage, force bool) error {
+func issueCert(caCert *x509.Certificate, caKey *rsa.PrivateKey, certPath, keyPath, commonName string, sans []string, extKeyUsage x509.ExtKeyUsage, force bool) error {
 	key, err := generateKey()
 	if err != nil {
 		return fmt.Errorf("generating key for %s: %w", commonName, err)
@@ -177,18 +182,17 @@ func issueCert(caCert *x509.Certificate, caKey *rsa.PrivateKey, certPath, keyPat
 	if err != nil {
 		return err
 	}
+	dnsNames, ipAddresses := splitSANs(sans)
 	now := time.Now()
 	template := &x509.Certificate{
 		SerialNumber: serial,
 		Subject:      pkix.Name{CommonName: commonName},
 		DNSNames:     dnsNames,
+		IPAddresses:  ipAddresses,
 		NotBefore:    now,
 		NotAfter:     now.Add(certValidity),
 		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		ExtKeyUsage:  []x509.ExtKeyUsage{extKeyUsage},
-	}
-	if ip := net.ParseIP(commonName); ip != nil {
-		template.IPAddresses = []net.IP{ip}
 	}
 
 	certDER, err := x509.CreateCertificate(rand.Reader, template, caCert, &key.PublicKey, caKey)
@@ -200,6 +204,19 @@ func issueCert(caCert *x509.Certificate, caKey *rsa.PrivateKey, certPath, keyPat
 		return err
 	}
 	return writeKey(keyPath, key, force)
+}
+
+// splitSANs sorts a mixed list of hostnames and IP addresses into the two
+// slices required by x509.Certificate's DNSNames and IPAddresses fields.
+func splitSANs(sans []string) (dnsNames []string, ipAddresses []net.IP) {
+	for _, san := range sans {
+		if ip := net.ParseIP(san); ip != nil {
+			ipAddresses = append(ipAddresses, ip)
+		} else {
+			dnsNames = append(dnsNames, san)
+		}
+	}
+	return dnsNames, ipAddresses
 }
 
 func loadCA(baseDir string) (*x509.Certificate, *rsa.PrivateKey, error) {

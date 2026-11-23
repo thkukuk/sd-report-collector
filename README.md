@@ -73,9 +73,30 @@ certificate previously signed by that CA. `init` also writes
 `sd-report-collector.conf.d/certgen.conf`, a config drop-in pointing
 `ServerCertificateFile`, `ServerKeyFile`, and `ClientCAFile` at the generated
 `server.pem`/`server.key`/`ca.pem`.
+
+The server certificate's SAN list always includes the machine's hostname and
+`localhost`. TLS only matches the address a client actually connects to
+against that SAN list, never against the certificate's CommonName — so if
+clients will reach the server by IP address or by a different name (e.g.
+`--url=https://192.168.3.16:8443/report`), that address must be added
+explicitly, or the upload fails with an error like *"no alternative
+certificate subject name matches target ipv4 address"*. Use `--san`
+(repeatable) at `init` time to add it:
+
+```
+sd-report-certs init --san=192.168.3.16 --san=report.example.com
+```
+
+Adding a SAN after the fact requires rerunning `init --force`, which
+regenerates the CA as well and so invalidates every existing client
+certificate (see above) — plan for reissuing all `client` certificates
+alongside any SAN change made this way.
 Each `clients/<name>.pem`/`clients/<name>.key` pair needs to be copied to
 the matching client (`myhost` here matches the hostname systemd-report will
-report as).
+report as), into the same `/etc/sd-report-collector/clients/` path as on the
+server, alongside a copy of `ca.pem` at `/etc/sd-report-collector/ca.pem`
+(used to verify the server's certificate); see the "Client" steps under
+Quickstart above.
 
 ## Verifying signed reports
 

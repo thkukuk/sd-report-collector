@@ -41,3 +41,8 @@ install_data('tmpfiles.d/sd-report-collector-node.conf',
   install_dir: tmpfilesdir,
   install_mode: 'rw-r--r--',
 )
+
+install_emptydir(
+  get_option('localstatedir') / 'lib/sd-report-collector',
+  install_mode: 'rwxr-xr-x',
+)
