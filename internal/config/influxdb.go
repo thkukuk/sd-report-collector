@@ -47,8 +47,6 @@ func LoadInfluxDB() (*InfluxDBConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer kf.Close()
-
 	cfg := influxDBDefaults()
 
 	if cfg.Server, err = kf.getString("InfluxDB", "Server", cfg.Server); err != nil {

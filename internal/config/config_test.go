@@ -29,8 +29,6 @@ notify=/bin/false
 	if err != nil {
 		t.Fatalf("readFileForTest: %v", err)
 	}
-	defer kf.Close()
-
 	addr, err := kf.getString("Server", "ListenAddress", "default")
 	if err != nil {
 		t.Fatalf("getString: %v", err)
@@ -84,7 +82,6 @@ func TestGetStringFallback(t *testing.T) {
 		if err != nil {
 			t.Fatalf("readFile: %v", err)
 		}
-		t.Cleanup(kf.Close)
 		return kf
 	}
 

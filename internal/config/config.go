@@ -64,8 +64,6 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer kf.Close()
-
 	cfg := defaults()
 
 	if cfg.ListenAddress, err = kf.getString("Server", "ListenAddress", cfg.ListenAddress); err != nil {

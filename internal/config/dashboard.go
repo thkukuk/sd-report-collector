@@ -36,8 +36,6 @@ func LoadDashboard() (*DashboardConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer kf.Close()
-
 	cfg := dashboardDefaults()
 
 	if cfg.OutputDirectory, err = kf.getString("Dashboard", "OutputDirectory", cfg.OutputDirectory); err != nil {
