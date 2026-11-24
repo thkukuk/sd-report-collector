@@ -11,6 +11,7 @@ io.systemd.Basic.ConfidentialVirtualization                      string  Confide
 io.systemd.Basic.DeploymentTimestampNSec                         gauge   Birth time of the file system backing /var/ (or of the root file system, if /var/ is not a separate mount) in nanoseconds since the UNIX epoch, i.e. when the system was deployed
 io.systemd.Basic.DiskReadBytes                                   counter Per block device metric: cumulative number of bytes read (partitions, stacked and virtual devices are excluded)
 io.systemd.Basic.DiskWriteBytes                                  counter Per block device metric: cumulative number of bytes written (partitions, stacked and virtual devices are excluded)
+io.systemd.Basic.FileSystemID                                    string  UUID of the file system backing /var/ (not reported in containers)
 io.systemd.Basic.Hostname                                        string  System hostname
 io.systemd.Basic.KernelVersion                                   string  Kernel version
 io.systemd.Basic.LoadAverage15Min                                gauge   System load average over the last 15 minutes
@@ -65,6 +66,8 @@ io.systemd.CGroup.CpuUsage                                       counter Per uni
 io.systemd.CGroup.IOReadBytes                                    counter Per unit metric: IO bytes read
 io.systemd.CGroup.IOReadOperations                               counter Per unit metric: IO read operations
 io.systemd.CGroup.MemoryUsage                                    gauge   Per unit metric: memory usage in bytes
+io.systemd.CGroup.PressureAvg10                                  gauge   Per unit metric: pressure stall percentage over the last 10s (resource=cpu|memory|io, type=some|full)
+io.systemd.CGroup.PressureStallSeconds                           counter Per unit metric: total time stalled in seconds (resource=cpu|memory|io, type=some|full)
 io.systemd.CGroup.TasksCurrent                                   gauge   Per unit metric: current number of tasks
 io.systemd.DiskHealth.ATAOfflineUncorrectable                    gauge   Per rotating ATA disk metric: number of uncorrectable sectors found during offline scans (SMART attribute 198)
 io.systemd.DiskHealth.ATAPendingSectors                          gauge   Per rotating ATA disk metric: number of unstable sectors waiting to be remapped (SMART attribute 197)
@@ -198,6 +201,12 @@ io.systemd.NetworkStatistics.TransmitDropped                     counter Per int
 io.systemd.NetworkStatistics.TransmitErrors                      counter Per interface metric: number of transmit errors
 io.systemd.NetworkStatistics.TransmitPackets                     counter Per interface metric: number of packets transmitted
 io.systemd.NetworkStatistics.TransmitQueueLength                 gauge   Per interface metric: transmit queue length in packets
+io.systemd.PowerSource.ACPower                                   gauge   System metric: 1 if the system is running on external (AC) power, 0 if it is running on battery
+io.systemd.PowerSource.BatteryCapacityPercent                    gauge   Per battery metric: current charge level in percent
+io.systemd.PowerSource.BatteryCycleCount                         counter Per battery metric: number of charge cycles the battery has undergone
+io.systemd.PowerSource.BatteryHealthPercent                      gauge   Per battery metric: full charge capacity relative to the design capacity, in percent
+io.systemd.PowerSource.BatteryPowerWatts                         gauge   Per battery metric: current charge or discharge rate in Watts
+io.systemd.PowerSource.BatteryStatus                             string  Per battery metric: charging status as reported by the kernel (Charging, Discharging, Not charging, Full, Unknown)
 org.openSUSE.Metrics.Network.Address                             string  Per interface metric: configured IP address in CIDR notation
 org.openSUSE.Metrics.Network.DeviceState                         string  Per interface metric: state of network device
 org.openSUSE.Metrics.Network.ManagedInterfaces                   gauge   Number of network interfaces managed by systemd-networkd
@@ -213,13 +222,15 @@ org.openSUSE.Metrics.SELinux.PolicyMLS                           string  SELinux
 org.openSUSE.Metrics.SELinux.PolicyRPMVersion                    string  Version of selinux-policy RPM
 org.openSUSE.Metrics.SELinux.RootDir                             string  SELinux root directory
 org.openSUSE.Metrics.SELinux.Status                              string  SELinux Status (enabled/disabled)
-org.openSUSE.Metrics.UPower.Battery.Charge                       string  Battery Charge Percentage
+org.openSUSE.Metrics.UPower.Battery.ChargeCycles                 gauge   Number of charge cycles of the battery
+org.openSUSE.Metrics.UPower.Battery.ChargePercentage             gauge   Battery Charge Level in Percent
 org.openSUSE.Metrics.UPower.Battery.Count                        gauge   Number of batteries
-org.openSUSE.Metrics.UPower.Battery.Energy                       string  Battery Energy in Wh
+org.openSUSE.Metrics.UPower.Battery.Energy                       string  Current Battery Energy in Wh
 org.openSUSE.Metrics.UPower.Battery.EnergyDesign                 string  Full Battery Energy (Design) in Wh
 org.openSUSE.Metrics.UPower.Battery.EnergyFull                   string  Full Battery Energy in Wh
+org.openSUSE.Metrics.UPower.Battery.HealthPercent                gauge   Full charge capacity relative to the design capacity, in percent
 org.openSUSE.Metrics.UPower.Battery.Model                        string  Battery Model
-org.openSUSE.Metrics.UPower.Battery.State                        string  Battery State
+org.openSUSE.Metrics.UPower.Battery.Status                       string  Battery Charging Status
 org.openSUSE.Metrics.UPower.Battery.Vendor                       string  Battery Vendor
 org.openSUSE.Metrics.Version                                     string  Version of metrics-exporter
 org.openSUSE.rebootmgr.MaintenanceWindowDuration                 gauge   Duration of the configured maintenance window in seconds
@@ -232,4 +243,4 @@ org.openSUSE.rebootmgr.RebootStatus                              string  Whether
 org.openSUSE.rebootmgr.RebootStrategy                            string  Currently configured reboot strategy
 org.openSUSE.rebootmgr.Version                                   string  Version of rebootmgr
 
-232 metrics listed.
+243 metrics listed.
