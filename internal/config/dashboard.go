@@ -16,6 +16,9 @@ type DashboardConfig struct {
 	// Hosts lists the hostnames offered by the dashboard's host switcher,
 	// read from the comma-separated "Hosts" key.
 	Hosts []string
+	// StaleMinutes is how long since a host's last report before the
+	// overview index marks it as overdue (red).
+	StaleMinutes int64
 	// LogLevel controls slog's minimum level: debug, info, warn, or error.
 	LogLevel string
 }
@@ -23,6 +26,7 @@ type DashboardConfig struct {
 func dashboardDefaults() DashboardConfig {
 	return DashboardConfig{
 		OutputDirectory: "/var/lib/sd-report-collector/dashboards",
+		StaleMinutes:    30,
 		LogLevel:        "info",
 	}
 }
@@ -52,6 +56,9 @@ func LoadDashboard() (*DashboardConfig, error) {
 		return nil, err
 	}
 	cfg.Hosts = splitCSV(hostsCSV)
+	if cfg.StaleMinutes, err = kf.getInt("Dashboard", "StaleMinutes", cfg.StaleMinutes); err != nil {
+		return nil, err
+	}
 	if cfg.LogLevel, err = kf.getStringFallback([]string{"Global", "Dashboard"}, "LogLevel", cfg.LogLevel); err != nil {
 		return nil, err
 	}

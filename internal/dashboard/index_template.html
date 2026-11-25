@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>systemd-report dashboards</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page:           #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:           #e1e0d9;
+    --border:         rgba(11,11,11,0.10);
+    --good:     #0ca30c;
+    --warning:  #fab219;
+    --serious:  #ec835a;
+    --critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page:           #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:           #2c2c2a;
+      --border:         rgba(255,255,255,0.10);
+      --good:     #0ca30c;
+      --warning:  #fab219;
+      --serious:  #ec835a;
+      --critical: #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page:           #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --grid:           #2c2c2a;
+    --border:         rgba(255,255,255,0.10);
+    --good:     #0ca30c;
+    --warning:  #fab219;
+    --serious:  #ec835a;
+    --critical: #e66767;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page);
+    color: var(--text-primary);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 20px 20px 60px; }
+
+  .topbar {
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+    gap: 12px 24px;
+    padding: 18px 20px;
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  .topbar .sub { color: var(--text-secondary); font-size: 13px; }
+  .theme-toggle {
+    border: 1px solid var(--border); background: var(--page); color: var(--text-primary);
+    border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;
+  }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 18px 0 12px; }
+  .controls input[type="text"] {
+    padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface-1); color: var(--text-primary); font-size: 13px; min-width: 220px;
+  }
+  .controls .count { margin-left: auto; font-size: 12.5px; color: var(--text-muted); }
+
+  .table-wrap { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; overflow: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  thead th {
+    text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em;
+    color: var(--text-muted); border-bottom: 1px solid var(--border); padding: 10px 12px;
+    cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  thead th:hover { color: var(--text-primary); }
+  thead th.sorted { color: var(--text-primary); }
+  tbody td { padding: 8px 12px; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+  tbody tr:hover { background: var(--page); }
+  tbody tr.stale { background: color-mix(in srgb, var(--critical) 12%, transparent); }
+  tbody tr.stale:hover { background: color-mix(in srgb, var(--critical) 20%, transparent); }
+  td.host a { font-weight: 600; }
+  td.host a:hover { text-decoration: underline; }
+  .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  .badge {
+    display: inline-block; border-radius: 4px; padding: 1px 7px; font-size: 11.5px; font-weight: 600;
+    color: #fff; white-space: nowrap;
+  }
+  .badge.muted { background: var(--text-muted); color: #fff; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+  footer { margin-top: 24px; color: var(--text-muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div>
+    <h1>systemd-report dashboards</h1>
+    <div class="sub" id="hdr-sub">—</div>
+  </div>
+  <button class="theme-toggle" id="theme-toggle" type="button">Theme</button>
+</div>
+
+<div class="wrap">
+  <div class="controls">
+    <input type="text" id="host-search" placeholder="Filter hosts…">
+    <span class="count" id="host-count"></span>
+  </div>
+  <div class="table-wrap">
+    <table id="hosts-table">
+      <thead><tr>
+        <th data-key="hostname">Host</th>
+        <th data-key="systemState">System state</th>
+        <th data-key="signStatus">Sign status</th>
+        <th data-key="metrics" class="num">Metrics</th>
+        <th data-key="lastSeenMs">Last report</th>
+      </tr></thead>
+      <tbody id="hosts-tbody"></tbody>
+    </table>
+  </div>
+  <footer id="footer"></footer>
+</div>
+
+<script id="index-data" type="application/json">__INDEX_DATA_JSON__</script>
+<script>
+/* Polled periodically from index-data.json (see refreshData below) so a
+ * browser tab left open keeps learning about new reports, rather than
+ * judging staleness forever against the snapshot it happened to load with. */
+let INDEX_DATA = JSON.parse(document.getElementById('index-data').textContent);
+let NODES = INDEX_DATA.nodes;
+let STALE_MINUTES = INDEX_DATA.staleMinutes;
+let GENERATED_AT = INDEX_DATA.generatedAt;
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function el(tag, attrs, html) {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    if (k === 'class') e.className = attrs[k];
+    else if (k === 'text') e.textContent = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  if (html != null) e.innerHTML = html;
+  return e;
+}
+function fmtDurationSeconds(s) {
+  if (s == null || isNaN(s)) return '—';
+  const neg = s < 0;
+  s = Math.abs(s);
+  if (s < 1) return (neg ? '-' : '') + Math.round(s * 1000) + ' ms';
+  const days = Math.floor(s / 86400); s -= days * 86400;
+  const hrs = Math.floor(s / 3600); s -= hrs * 3600;
+  const mins = Math.floor(s / 60); s -= mins * 60;
+  const secs = Math.floor(s);
+  const parts = [];
+  if (days) parts.push(days + 'd');
+  if (days || hrs) parts.push(hrs + 'h');
+  if (days || hrs || mins) parts.push(mins + 'm');
+  if (!days) parts.push(secs + 's');
+  return (neg ? '-' : '') + parts.slice(0, 3).join(' ');
+}
+function stateBadge(state) {
+  if (!state) return '<span class="badge muted">unknown</span>';
+  const color = state === 'running' ? 'var(--good)'
+    : state === 'degraded' ? 'var(--critical)'
+    : 'var(--warning)';
+  return `<span class="badge" style="background:${color}">${escapeHtml(state)}</span>`;
+}
+function signBadge(status) {
+  const map = {
+    'trusted':    { label: 'trusted',    color: 'var(--good)' },
+    'known':      { label: 'known',      color: 'var(--warning)' },
+    'first-seen': { label: 'first seen', color: 'var(--serious)' },
+    'unsigned':   { label: 'unsigned',   color: null },
+  };
+  const s = map[status];
+  if (!s) return '<span class="badge muted">—</span>';
+  return s.color
+    ? `<span class="badge" style="background:${s.color}">${escapeHtml(s.label)}</span>`
+    : `<span class="badge muted">${escapeHtml(s.label)}</span>`;
+}
+
+let sortKey = 'hostname';
+let sortDir = 1;
+
+function render() {
+  const now = Date.now();
+  const staleMs = STALE_MINUTES * 60 * 1000;
+  const filter = document.getElementById('host-search').value.trim().toLowerCase();
+  const rows = NODES.filter(n => !filter || n.hostname.toLowerCase().includes(filter));
+  rows.sort((a, b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') av = av.toLowerCase();
+    if (typeof bv === 'string') bv = bv.toLowerCase();
+    if (av < bv) return -1 * sortDir;
+    if (av > bv) return 1 * sortDir;
+    return 0;
+  });
+
+  const tbody = document.getElementById('hosts-tbody');
+  tbody.innerHTML = '';
+  for (const n of rows) {
+    const ageMs = now - n.lastSeenMs;
+    const stale = ageMs > staleMs;
+    const tr = el('tr', { class: stale ? 'stale' : '' });
+    tr.appendChild(el('td', { class: 'host' }, `<a href="${encodeURIComponent(n.hostname)}.html">${escapeHtml(n.hostname)}</a>`));
+    tr.appendChild(el('td', {}, stateBadge(n.systemState)));
+    tr.appendChild(el('td', {}, signBadge(n.signStatus)));
+    tr.appendChild(el('td', { class: 'mono' }, String(n.metrics)));
+    const ago = fmtDurationSeconds(ageMs / 1000) + ' ago';
+    const abs = new Date(n.lastSeenMs).toISOString().replace('T', ' ').replace('.000Z', ' UTC');
+    const dotColor = stale ? 'var(--critical)' : 'var(--good)';
+    tr.appendChild(el('td', { class: 'mono', title: abs }, `<span class="dot" style="background:${dotColor}"></span>${escapeHtml(ago)}`));
+    tbody.appendChild(tr);
+  }
+  document.getElementById('host-count').textContent = `${rows.length} / ${NODES.length} hosts`;
+
+  const staleCount = NODES.filter(n => now - n.lastSeenMs > staleMs).length;
+  document.getElementById('hdr-sub').textContent =
+    `${NODES.length} host${NODES.length === 1 ? '' : 's'}` +
+    (staleCount ? ` · ${staleCount} overdue (no report in > ${STALE_MINUTES} min)` : ' · all reporting');
+
+  document.getElementById('footer').textContent = 'Last data refresh: ' + GENERATED_AT +
+    ' — this page polls for new reports and updates live in your browser.';
+}
+
+document.getElementById('host-search').addEventListener('input', render);
+document.querySelectorAll('#hosts-table thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+    document.querySelectorAll('#hosts-table thead th').forEach(h => h.classList.remove('sorted'));
+    th.classList.add('sorted');
+    render();
+  });
+});
+
+(function themeToggle() {
+  const btn = document.getElementById('theme-toggle');
+  const order = [null, 'dark', 'light'];
+  const labels = { null: 'Theme: Auto', dark: 'Theme: Dark', light: 'Theme: Light' };
+  let i = 0;
+  function apply() {
+    const mode = order[i];
+    if (mode) document.documentElement.setAttribute('data-theme', mode);
+    else document.documentElement.removeAttribute('data-theme');
+    btn.textContent = labels[mode];
+  }
+  btn.addEventListener('click', () => { i = (i + 1) % order.length; apply(); });
+  apply();
+})();
+
+function refreshData() {
+  fetch('index-data.json', { cache: 'no-store' })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(data => {
+      NODES = data.nodes;
+      STALE_MINUTES = data.staleMinutes;
+      GENERATED_AT = data.generatedAt;
+      render();
+    })
+    .catch(() => { /* keep showing the last known data; render() still ticks the clock */ });
+}
+
+render();
+setInterval(render, 5000);
+setInterval(refreshData, 15000);
+</script>
+</body>
+</html>

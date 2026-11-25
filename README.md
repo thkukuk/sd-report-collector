@@ -144,12 +144,30 @@ compiled into the binary, but can be overriden via a snippet in
 OutputDirectory=/srv/www/html/dashboards
 TemplateFile=/etc/sd-report-dashboard/dashboard_template.html
 DescribeFile=/etc/sd-report-dashboard/report.describe
+StaleMinutes=30
 ```
 
 `TemplateFile` and `DescribeFile` are optional; leaving them unset uses the
 built-in template and omits per-metric type/description annotations,
 respectively. `DescribeFile` should point at the output of
 `systemd-report describe`.
+
+Every time a report is processed, the plugin also updates
+`<OutputDirectory>/index.html`, an overview page listing every host it has
+ever seen a report from, each linking to that host's own dashboard. It shows
+the host's `io.systemd.Manager.SystemState` and how long ago its last report
+arrived. A host is highlighted in red once it's gone longer than
+`StaleMinutes` (default 30) without sending a report — since reports are
+only pushed by the node itself, this is what surfaces a dead or unreachable
+node that would otherwise just silently stop updating its own page.
+
+The page polls `<OutputDirectory>/index-data.json` every 15 seconds and
+re-renders, so a browser tab left open keeps learning about new reports
+instead of judging staleness forever against whatever it happened to load
+with; the on-screen "last report" age and red/green status also tick
+forward every few seconds between polls. The per-host last-seen state the
+plugin itself tracks across invocations is kept separately in
+`<OutputDirectory>/.index-state.json`.
 
 The dashboard header shows a badge for the report's sign-status (the first
 argument sd-report-collector invokes this plugin with, see "Verifying signed

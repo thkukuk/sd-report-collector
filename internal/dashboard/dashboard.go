@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -82,6 +83,11 @@ func Generate(cfg *config.DashboardConfig, signStatus, reportPath string) (strin
 	outPath := filepath.Join(cfg.OutputDirectory, hostname+".html")
 	if err := writeAtomic(outPath, html); err != nil {
 		return "", 0, err
+	}
+
+	reportTime := report.ExtractMeta(reportJSON).Timestamp
+	if err := updateIndex(cfg, hostname, signStatus, reportJSON, reportTime); err != nil {
+		slog.Error("Failed to update dashboard index", "host", hostname, "error", err)
 	}
 
 	return outPath, len(meta.Metrics), nil
