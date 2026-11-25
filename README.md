@@ -14,27 +14,32 @@ Go package, with no cgo or C library dependency.
 meson setup build
 meson compile -C build
 meson test -C build
+sudo meson install -C build
 ```
 
-## Quickstart
+## Quickstart for localhost
+
+Setting up sd-report-collector with server and client on a single host.
 
 ### Server
 
 Generate the CA, server cert, and a client cert under /etc/sd-report-collector and start the service:
 
 ```sh
-sd-report-certs init
-sd-report-certs client myhost.example.com
+sudo sd-report-certs init
+sudo sd-report-certs client localhost
 
-systemctl start sd-report-collector.service
+sudo systemctl start sd-report-collector.service
 ```
 
 ### Client
 
+systemd-report has to be installed (package systemd-experimental)
+
 Call `systemd-report` manual:
 
 ```sh
-/usr/lib/systemd/systemd-report upload --url=https://<server>:8443/report --cert=/etc/sd-report-collector/clients/myhost.pem --key=/etc/sd-report-collector/clients/myhost.key --trust=/etc/sd-report-collector/ca.pem
+sudo /usr/lib/systemd/systemd-report upload --url=https://localhost:8443/report --cert=/etc/sd-report-collector/clients/localhost.pem --key=/etc/sd-report-collector/clients/localhost.key --trust=/etc/sd-report-collector/ca.pem
 ```
 
 Or use the provided timer and service file to run `systemd-report` regular.
@@ -46,9 +51,45 @@ mkdir -p /etc/sd-report-collector/clients/
 cp myhost.example.com.{key,pem} /etc/sd-report-collector/clients/
 cp ca.pem /etc/sd-report-collector
 
-echo "REPORT_SERVER=<server hostname>" > /etc/default/sd-report-collector
-systemctl enable --now sd-report-collector-node.timer
+sudo sh -c 'echo "REPORT_SERVER=localhost" > /etc/default/sd-report-collector'
+sudo systemctl enable --now sd-report-collector-node.timer
 ```
+
+#### SELinux
+
+With SELinux in enforcing mode, the manual `systemd-report upload` command
+above works, but `sd-report-collector-node.service` fails. `systemd-report`
+has no SELinux domain of its own, so under systemd it runs as `init_t`, which
+may not connect to port 8443. The journal then shows:
+
+```
+systemd-report[...]: Upload to https://<server>:8443/report failed: Failed to connect to <server> port 8443 after 0 ms: Could not connect to server
+systemd-report[...]: Unable to connect to /run/systemd/report/org.openSUSE.rebootmgr: Permission denied
+```
+
+and `ausearch -m avc,user_avc -ts recent` lists `denied { name_connect }` for
+`dest=8443` (and `denied { connectto }` for the rebootmgr socket) with
+`scontext=...:init_t:s0`.
+
+Install the policy module shipped in
+`dist/selinux/sd-report-collector-node.te` (installed to
+`/usr/lib/sd-report-collector/selinux/`) once on every client. It needs the
+`checkpolicy` and `policycoreutils` packages:
+
+```sh
+cd "$(mktemp -d)"
+checkmodule -M -m -o sd-report-collector-node.mod /usr/lib/sd-report-collector/selinux/sd-report-collector-node.te
+semodule_package -o sd-report-collector-node.pp -m sd-report-collector-node.mod
+sudo semodule -i sd-report-collector-node.pp
+```
+
+The module allows `init_t` to connect to `http_port_t` ports (8443 is
+labeled `http_port_t`), and to the rebootmgr socket if rebootmgr's policy is
+present. Note that this applies to everything running as `init_t`, not just
+`systemd-report`. If the collector listens on a port that is not labeled
+`http_port_t`, label it with `semanage port -a -t http_port_t -p tcp <port>`
+instead of widening the module. Remove the module again with
+`sudo semodule -r sd-report-collector-node`.
 
 ## Configuration
 
@@ -151,28 +192,71 @@ verification outcome for the report it's about to process: `unsigned`,
 report as a static, self-contained HTML dashboard. Point a `[Plugins]` entry
 at the built binary:
 
+1. Plugin configuration
+
+Create a config drop-in to enable the dashboard plugin and set its output directory:
+
+File: /etc/sd-report-collector/sd-report-collector.conf.d/90-dashboard.conf
+
 ```
 [Plugins]
 dashboard=/usr/lib/sd-report-collector/sd-report-dashboard
-```
 
-It writes `<OutputDirectory>/<hostname>.html`, overwriting that host's
-dashboard in place each time a new report arrives. The HTML template is
-compiled into the binary, but can be overriden via a snippet in
-`/etc/sd-report-collector/sd-report-collector.conf.d/`:
-
-```
 [Dashboard]
 OutputDirectory=/srv/www/html/dashboards
-TemplateFile=/etc/sd-report-dashboard/dashboard_template.html
-DescribeFile=/etc/sd-report-dashboard/report.describe
 StaleMinutes=30
 ```
 
-`TemplateFile` and `DescribeFile` are optional; leaving them unset uses the
-built-in template and omits per-metric type/description annotations,
-respectively. `DescribeFile` should point at the output of
-`systemd-report describe`.
+Without this (or an equivalent [Plugins] entry already active in the vendor config), the plugin is never invoked — no "Plugin started/failed" log lines appear at all, just "Report saved".
+
+2. Create the target directory first
+
+ReadWritePaths= (used in step 3) does not auto-create its target, unlike directives such as StateDirectory=. The path must already exist, or systemd fails to build the sandbox's mount namespace:
+
+mkdir -p /srv/www/html/dashboards
+
+3. Sandbox configuration
+
+The service runs under ProtectSystem=strict, which makes the whole filesystem read-only except for paths explicitly listed in ReadWritePaths= (only /var/lib/sd-report-collector by default). Since the plugin runs as a child process inside the same sandbox, it needs /srv/www/html/dashboards added explicitly, via a systemd override instead of editing the shipped unit file directly:
+
+mkdir -p /etc/systemd/system/sd-report-collector.service.d
+cat > /etc/systemd/system/sd-report-collector.service.d/override.conf <<'EOF'
+[Service]
+ReadWritePaths=/srv/www/html/dashboards
+EOF
+
+
+4. Reload and restart
+
+systemctl daemon-reload
+systemctl reset-failed sd-report-collector.service   # clears any prior start-limit-hit state
+systemctl restart sd-report-collector.service
+systemctl status sd-report-collector.service          # should show active (running)
+
+5. Verify
+
+Trigger an upload from a client and check:
+
+journalctl -u sd-report-collector.service -f
+
+A successful run shows "Report saved" followed by the plugin executing without an "Plugin failed" entry, and /srv/www/html/dashboards/<hostname>.html should now exist.
+
+xxxxxIt writes `<OutputDirectory>/<hostname>.html`, overwriting that host's
+xxxxxdashboard in place each time a new report arrives. The HTML template is
+xxxxxcompiled into the binary, but can be overriden via a snippet in
+xxxx`/etc/sd-report-collector/sd-report-collector.conf.d/`:
+
+xx```
+xxxx[Dashboard]
+xxxxOutputDirectory=/srv/www/html/dashboards
+xxxTemplateFile=/etc/sd-report-dashboard/dashboard_template.html
+xxxDescribeFile=/etc/sd-report-dashboard/report.describe
+xxx```
+
+xxx`TemplateFile` and `DescribeFile` are optional; leaving them unset uses the
+xxbuilt-in template and omits per-metric type/description annotations,
+xxxrespectively. `DescribeFile` should point at the output of
+xxxx`systemd-report describe`.
 
 Every time a report is processed, the plugin also updates
 `<OutputDirectory>/index.html`, an overview page listing every host it has
