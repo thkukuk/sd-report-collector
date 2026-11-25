@@ -270,6 +270,7 @@
         <th class="num" data-key="memUsageBytes">Memory</th>
         <th class="num" data-key="tasksCurrent">Tasks</th>
         <th class="num" data-key="ioReadBytes">IO read</th>
+        <th class="num" data-key="pressureMax">Pressure</th>
       </tr></thead>
       <tbody id="units-tbody"></tbody>
     </table>
@@ -1021,6 +1022,8 @@ const UNITS = (function buildUnits() {
       activeEnter: 0, activeExit: 0, stateChanged: 0, inactiveExit: 0,
       cpuUsageNs: null, memUsageBytes: null, tasksCurrent: null,
       ioReadBytes: null, ioReadOps: null,
+      pressureCpuSome: null, pressureMemSome: null, pressureIoSome: null,
+      pressureCpuStall: null, pressureMemStall: null, pressureIoStall: null,
     });
     return map.get(name);
   }
@@ -1046,6 +1049,20 @@ const UNITS = (function buildUnits() {
       case 'io.systemd.CGroup.TasksCurrent': get(m.object).tasksCurrent = m.value; break;
       case 'io.systemd.CGroup.IOReadBytes': get(m.object).ioReadBytes = m.value; break;
       case 'io.systemd.CGroup.IOReadOperations': get(m.object).ioReadOps = m.value; break;
+      case 'io.systemd.CGroup.PressureAvg10':
+        if (m.fields && m.fields.type === 'some') {
+          if (m.fields.resource === 'cpu') get(m.object).pressureCpuSome = m.value;
+          else if (m.fields.resource === 'memory') get(m.object).pressureMemSome = m.value;
+          else if (m.fields.resource === 'io') get(m.object).pressureIoSome = m.value;
+        }
+        break;
+      case 'io.systemd.CGroup.PressureStallSeconds':
+        if (m.fields && m.fields.type === 'some') {
+          if (m.fields.resource === 'cpu') get(m.object).pressureCpuStall = m.value;
+          else if (m.fields.resource === 'memory') get(m.object).pressureMemStall = m.value;
+          else if (m.fields.resource === 'io') get(m.object).pressureIoStall = m.value;
+        }
+        break;
     }
   }
   const list = [];
@@ -1055,6 +1072,8 @@ const UNITS = (function buildUnits() {
     u.isProblem = u.activeState === 'failed' ||
       u.loadState === 'bad-setting' || u.loadState === 'error' ||
       (u.errno || 0) !== 0;
+    const pressureVals = [u.pressureCpuSome, u.pressureMemSome, u.pressureIoSome].filter(v => v != null);
+    u.pressureMax = pressureVals.length ? Math.max(...pressureVals) : null;
     list.push(u);
   }
   return list;
@@ -1074,6 +1093,20 @@ function errnoLabel(n) {
   if (n === 0) return '0';
   const name = ERRNO[n];
   return name ? `${n} (${name})` : String(n);
+}
+function pressureCellText(u) {
+  const parts = [];
+  if (u.pressureCpuSome != null) parts.push('cpu ' + u.pressureCpuSome.toFixed(1) + '%');
+  if (u.pressureMemSome != null) parts.push('mem ' + u.pressureMemSome.toFixed(1) + '%');
+  if (u.pressureIoSome != null) parts.push('io ' + u.pressureIoSome.toFixed(1) + '%');
+  return parts.length ? parts.join(' · ') : '—';
+}
+function pressureTitle(u) {
+  const lines = [desc('io.systemd.CGroup.PressureAvg10')];
+  if (u.pressureCpuStall != null) lines.push(`cpu stall: ${fmtDurationSeconds(u.pressureCpuStall)} total`);
+  if (u.pressureMemStall != null) lines.push(`memory stall: ${fmtDurationSeconds(u.pressureMemStall)} total`);
+  if (u.pressureIoStall != null) lines.push(`io stall: ${fmtDurationSeconds(u.pressureIoStall)} total`);
+  return lines.join('\n');
 }
 
 /* ---------- problem banner ---------- */
@@ -1196,6 +1229,7 @@ function errnoLabel(n) {
         <td class="num" title="${escapeHtml(desc('io.systemd.CGroup.MemoryUsage'))}">${u.memUsageBytes != null ? fmtBytes(u.memUsageBytes) : '—'}</td>
         <td class="num" title="${escapeHtml(desc('io.systemd.CGroup.TasksCurrent'))}">${u.tasksCurrent != null ? u.tasksCurrent : '—'}</td>
         <td class="num" title="${escapeHtml((u.ioReadOps != null ? u.ioReadOps + ' operations · ' : '') + desc('io.systemd.CGroup.IOReadBytes'))}">${u.ioReadBytes != null ? fmtBytes(u.ioReadBytes) : '—'}</td>
+        <td class="num" title="${escapeHtml(pressureTitle(u))}">${pressureCellText(u)}</td>
       </tr>`).join('');
   }
 

@@ -2074,7 +2074,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 114
+        "y": 122
       },
       "id": 300,
       "panels": [],
@@ -2122,7 +2122,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 115
+        "y": 123
       },
       "id": 303,
       "targets": [
@@ -2193,7 +2193,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 119
+        "y": 127
       },
       "id": 304,
       "targets": [
@@ -2249,7 +2249,7 @@
         "h": 8,
         "w": 10,
         "x": 4,
-        "y": 115
+        "y": 123
       },
       "id": 301,
       "targets": [
@@ -2286,7 +2286,7 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 115
+        "y": 123
       },
       "id": 302,
       "targets": [
@@ -2423,6 +2423,44 @@
         "showHeader": true,
         "cellHeight": "sm"
       }
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 114
+      },
+      "id": 29,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "cpu = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.CGroup.PressureAvg10\" and r._field == \"value\" and r.host == \"${host}\" and r.resource == \"cpu\" and r.type == \"some\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> rename(columns: {_value: \"cpu_pct\"})\n\nmemory = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.CGroup.PressureAvg10\" and r._field == \"value\" and r.host == \"${host}\" and r.resource == \"memory\" and r.type == \"some\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> rename(columns: {_value: \"memory_pct\"})\n\nio = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"io.systemd.CGroup.PressureAvg10\" and r._field == \"value\" and r.host == \"${host}\" and r.resource == \"io\" and r.type == \"some\")\n  |> last()\n  |> keep(columns: [\"object\", \"_value\"])\n  |> rename(columns: {_value: \"io_pct\"})\n\ncpu_memory = join(tables: {cpu: cpu, memory: memory}, on: [\"object\"])\n\njoin(tables: {cpu_memory: cpu_memory, io: io}, on: [\"object\"])\n  |> map(fn: (r) => ({ r with max_pct: if r.cpu_pct > r.memory_pct then (if r.cpu_pct > r.io_pct then r.cpu_pct else r.io_pct) else (if r.memory_pct > r.io_pct then r.memory_pct else r.io_pct) }))\n  |> sort(columns: [\"max_pct\"], desc: true)\n  |> limit(n: 15)\n  |> rename(columns: {object: \"unit\"})\n  |> keep(columns: [\"unit\", \"cpu_pct\", \"memory_pct\", \"io_pct\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Units by Pressure (some, 10s avg)",
+      "type": "table"
     }
   ],
   "refresh": "5m",
