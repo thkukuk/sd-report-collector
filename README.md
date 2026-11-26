@@ -17,16 +17,16 @@ meson test -C build
 sudo meson install -C build
 ```
 
-## Quickstart for localhost
+## Quickstart for localhost only
 
-Setting up sd-report-collector with server and client on a single host.
+Setting up sd-report-collector with collector host and client on a single machine (localhost).
 
-### Server
+### Collector Host
 
 Generate the CA, server cert, and a client cert under /etc/sd-report-collector and start the service:
 
 ```sh
-sudo sd-report-certs init
+sudo sd-report-certs init --force --san=<collector-host-ip-address>
 sudo sd-report-certs client localhost
 
 sudo systemctl start sd-report-collector.service
@@ -46,11 +46,6 @@ Or use the provided timer and service file to run `systemd-report` regular.
 The steps on the client:
 
 ```sh
-mkdir -p /etc/sd-report-collector/clients/
-
-cp myhost.example.com.{key,pem} /etc/sd-report-collector/clients/
-cp ca.pem /etc/sd-report-collector
-
 sudo sh -c 'echo "REPORT_SERVER=localhost" > /etc/default/sd-report-collector'
 sudo systemctl enable --now sd-report-collector-node.timer
 ```
@@ -91,6 +86,49 @@ present. Note that this applies to everything running as `init_t`, not just
 instead of widening the module. Remove the module again with
 `sudo semodule -r sd-report-collector-node`.
 
+## Quickstart Collector Host/Clients on different Machines
+
+### Collector Host
+
+Generate the CA, server cert, and a client cert under /etc/sd-report-collector and start the service:
+
+```sh
+sudo sd-report-certs init --force --san=<collector-host-ip-address>
+sudo sd-report-certs client <client-ip-address|client-host-name>
+
+sudo systemctl start sd-report-collector.service
+```
+
+### Client
+
+systemd-report has to be installed (package systemd-experimental)
+
+Copy all needed certivicates from the collector host to the client:
+
+```sh
+sudo mkdir -p /etc/sd-report-collector/clients
+scp root@<collector-host>:/etc/sd-report-collector/clients/<client-ip-address|client-host-name>.{pem,key} /tmp/
+scp root@<collector-host>:/etc/sd-report-collector/ca.pem /tmp/
+sudo mv /tmp/<client-ip-address|client-host-name>.{pem,key} /etc/sd-report-collector/clients/
+sudo mv /tmp/ca.pem /etc/sd-report-collector/
+sudo chmod 600 /etc/sd-report-collector/clients/<client-ip-address|client-host-name>.key
+```
+
+Call `systemd-report` manual:
+
+```sh
+sudo /usr/lib/systemd/systemd-report upload --url=https://<collector-host-ip-address>:8443/report --cert=/etc/sd-report-collector/clients/<client-ip-address|client-host-name>.pem --key=/etc/sd-report-collector/clients/<client-ip-address|client-host-name>.key --trust=/etc/sd-report-collector/ca.pem
+```
+
+Or use the provided timer and service file to run `systemd-report` regular.
+The steps on the client:
+
+```sh
+sudo sh -c 'echo "REPORT_SERVER=localhost" > /etc/default/sd-report-collector'
+sudo systemctl enable --now sd-report-collector-node.timer
+```
+Kepp in mind, that the SELinux problem, dscribed above, could also happen here.
+
 ## Configuration
 
 See `dist/sd-report-collector.conf` for all keys and their defaults.
@@ -125,7 +163,7 @@ certificate subject name matches target ipv4 address"*. Use `--san`
 (repeatable) at `init` time to add it:
 
 ```
-sd-report-certs init --san=192.168.3.16 --san=report.example.com
+sd-report-certs init --san=192.168.3.16 --san=myhost
 ```
 
 Adding a SAN after the fact requires rerunning `init --force`, which
@@ -205,9 +243,21 @@ dashboard=/usr/lib/sd-report-collector/sd-report-dashboard
 [Dashboard]
 OutputDirectory=/srv/www/html/dashboards
 StaleMinutes=30
+#TemplateFile=/etc/sd-report-dashboard/dashboard_template.html
+#DescribeFile=/etc/sd-report-dashboard/report.describe
 ```
 
-Without this (or an equivalent [Plugins] entry already active in the vendor config), the plugin is never invoked — no "Plugin started/failed" log lines appear at all, just "Report saved".
+Without this (or an equivalent [Plugins] entry already active in the vendor config), the plugin is
+never invoked — no "Plugin started/failed" log lines appear at all, just "Report saved".
+
+It writes `<OutputDirectory>/<hostname>.html`, overwriting that host's
+dashboard in place each time a new report arrives.
+
+The HTML template `TemplateFile` and `DescribeFile` are optional; leaving them unset uses the
+built-in template and omits per-metric type/description annotations,
+respectively. `DescribeFile` should point at the output of
+`systemd-report describe`.
+
 
 2. Create the target directory first
 
@@ -240,23 +290,6 @@ Trigger an upload from a client and check:
 journalctl -u sd-report-collector.service -f
 
 A successful run shows "Report saved" followed by the plugin executing without an "Plugin failed" entry, and /srv/www/html/dashboards/<hostname>.html should now exist.
-
-xxxxxIt writes `<OutputDirectory>/<hostname>.html`, overwriting that host's
-xxxxxdashboard in place each time a new report arrives. The HTML template is
-xxxxxcompiled into the binary, but can be overriden via a snippet in
-xxxx`/etc/sd-report-collector/sd-report-collector.conf.d/`:
-
-xx```
-xxxx[Dashboard]
-xxxxOutputDirectory=/srv/www/html/dashboards
-xxxTemplateFile=/etc/sd-report-dashboard/dashboard_template.html
-xxxDescribeFile=/etc/sd-report-dashboard/report.describe
-xxx```
-
-xxx`TemplateFile` and `DescribeFile` are optional; leaving them unset uses the
-xxbuilt-in template and omits per-metric type/description annotations,
-xxxrespectively. `DescribeFile` should point at the output of
-xxxx`systemd-report describe`.
 
 Every time a report is processed, the plugin also updates
 `<OutputDirectory>/index.html`, an overview page listing every host it has
