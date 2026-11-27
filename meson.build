@@ -18,6 +18,13 @@ vendor_libdir = get_option('vendor_libdir')
 
 go_env = environment()
 go_env.set('GOFLAGS', '')
+# Builds run with build_always_stale, so 'meson install' re-invokes 'go
+# build' even when already compiled. Under 'sudo meson install', ninja runs
+# with privileges dropped to the invoking user but $HOME still set to
+# root's, so Go's default $HOME-derived cache path is unwritable. Pin
+# GOCACHE inside the build directory instead, which the invoking user owns
+# regardless of $HOME.
+go_env.set('GOCACHE', meson.project_build_root() / 'go-cache')
 
 binaries = {
   'sd-report-certs': get_option('bindir'),
