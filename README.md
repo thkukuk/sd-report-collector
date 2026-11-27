@@ -146,15 +146,17 @@ and `ausearch -m avc,user_avc -ts recent` lists `denied { name_connect }` for
 `dest=8443` (and `denied { connectto }` for the rebootmgr socket) with
 `scontext=...:init_t:s0`.
 
-Install the policy module from the source tree,
-`dist/selinux/sd-report-collector-node.te`, once on every machine that runs
-`sd-report-collector-node.service`, which includes the localhost-only setup.
-The file is not installed by `meson install`, so copy it to the machine first.
-It needs the `checkpolicy` and `policycoreutils` packages:
+Install the policy module `dist/selinux/sd-report-collector-node.te` once on
+every machine that runs `sd-report-collector-node.service`, which includes the
+localhost-only setup. `meson install` does not install the file, so copy it
+from the source tree to `/usr/lib/sd-report-collector/selinux/` on the machine
+first. Building the module needs the `checkpolicy` and `policycoreutils`
+packages:
 
 ```sh
+sudo install -D -m 0644 dist/selinux/sd-report-collector-node.te /usr/lib/sd-report-collector/selinux/sd-report-collector-node.te
 cd "$(mktemp -d)"
-checkmodule -M -m -o sd-report-collector-node.mod <path-to-source-tree>/dist/selinux/sd-report-collector-node.te
+checkmodule -M -m -o sd-report-collector-node.mod /usr/lib/sd-report-collector/selinux/sd-report-collector-node.te
 semodule_package -o sd-report-collector-node.pp -m sd-report-collector-node.mod
 sudo semodule -i sd-report-collector-node.pp
 ```
