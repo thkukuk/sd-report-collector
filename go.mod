@@ -5,7 +5,7 @@ go 1.27.1
 require (
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
 	github.com/klauspost/compress v1.20.5
-	github.com/openSUSE/libeconf/go/econf v0.0.0-20261119154058-41fa9d7e561a
+	github.com/openSUSE/libeconf/go/econf v0.8.8
 )
 
 require (
