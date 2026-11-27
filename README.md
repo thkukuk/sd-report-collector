@@ -50,6 +50,11 @@ sudo sh -c 'echo "REPORT_SERVER=localhost" > /etc/default/sd-report-collector'
 sudo systemctl enable --now sd-report-collector-node.timer
 ```
 
+You can check the upload by calling:
+```
+sudo journalctl -u sd-report-collector.service -f
+```
+
 #### SELinux
 
 With SELinux in enforcing mode, the manual `systemd-report upload` command
@@ -263,32 +268,37 @@ respectively. `DescribeFile` should point at the output of
 
 ReadWritePaths= (used in step 3) does not auto-create its target, unlike directives such as StateDirectory=. The path must already exist, or systemd fails to build the sandbox's mount namespace:
 
-mkdir -p /srv/www/html/dashboards
+```
+sudo mkdir -p /srv/www/html/dashboards
+```
 
 3. Sandbox configuration
 
 The service runs under ProtectSystem=strict, which makes the whole filesystem read-only except for paths explicitly listed in ReadWritePaths= (only /var/lib/sd-report-collector by default). Since the plugin runs as a child process inside the same sandbox, it needs /srv/www/html/dashboards added explicitly, via a systemd override instead of editing the shipped unit file directly:
 
-mkdir -p /etc/systemd/system/sd-report-collector.service.d
-cat > /etc/systemd/system/sd-report-collector.service.d/override.conf <<'EOF'
+```
+sudo mkdir -p /etc/systemd/system/sd-report-collector.service.d
+sudo tee /etc/systemd/system/sd-report-collector.service.d/override.conf >/dev/null <<'EOF'
 [Service]
 ReadWritePaths=/srv/www/html/dashboards
 EOF
-
+```
 
 4. Reload and restart
 
-systemctl daemon-reload
-systemctl reset-failed sd-report-collector.service   # clears any prior start-limit-hit state
-systemctl restart sd-report-collector.service
-systemctl status sd-report-collector.service          # should show active (running)
+```
+sudo systemctl daemon-reload
+sudo systemctl reset-failed sd-report-collector.service   # clears any prior start-limit-hit state
+sudo systemctl restart sd-report-collector.service
+sudo systemctl status sd-report-collector.service          # should show active (running)
+```
 
 5. Verify
 
 Trigger an upload from a client and check:
-
-journalctl -u sd-report-collector.service -f
-
+```
+sudo journalctl -u sd-report-collector.service -f
+```
 A successful run shows "Report saved" followed by the plugin executing without an "Plugin failed" entry, and /srv/www/html/dashboards/<hostname>.html should now exist.
 
 Every time a report is processed, the plugin also updates
