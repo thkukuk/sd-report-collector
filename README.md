@@ -181,7 +181,7 @@ report as — this can be an IP address instead, e.g. `sd-report-certs client
 192.168.122.80`, if that's how the client identifies itself), into the same
 `/etc/sd-report-collector/clients/` path as on the server, alongside a copy
 of `ca.pem` at `/etc/sd-report-collector/ca.pem` (used to verify the
-server's certificate); see the "Client" steps under Quickstart above.
+server's certificate); see the "Client" steps under "Quickstart Collector Host/Clients on different Machines" above.
 
 ## Verifying signed reports
 
@@ -239,7 +239,7 @@ at the built binary:
 
 Create a config drop-in to enable the dashboard plugin and set its output directory:
 
-File: /etc/sd-report-collector/sd-report-collector.conf.d/90-dashboard.conf
+File: `/etc/sd-report-collector/sd-report-collector.conf.d/90-dashboard.conf`
 
 ```
 [Plugins]
@@ -266,7 +266,7 @@ respectively. `DescribeFile` should point at the output of
 
 2. Create the target directory first
 
-ReadWritePaths= (used in step 3) does not auto-create its target, unlike directives such as StateDirectory=. The path must already exist, or systemd fails to build the sandbox's mount namespace:
+`ReadWritePaths=` (used in step 3) does not auto-create its target, unlike directives such as `StateDirectory=`. The path must already exist, or systemd fails to build the sandbox's mount namespace:
 
 ```
 sudo mkdir -p /srv/www/html/dashboards
@@ -274,7 +274,7 @@ sudo mkdir -p /srv/www/html/dashboards
 
 3. Sandbox configuration
 
-The service runs under ProtectSystem=strict, which makes the whole filesystem read-only except for paths explicitly listed in ReadWritePaths= (only /var/lib/sd-report-collector by default). Since the plugin runs as a child process inside the same sandbox, it needs /srv/www/html/dashboards added explicitly, via a systemd override instead of editing the shipped unit file directly:
+The service runs under ProtectSystem=strict, which makes the whole filesystem read-only except for paths explicitly listed in `ReadWritePaths=` (only `/var/lib/sd-report-collector` by default). Since the plugin runs as a child process inside the same sandbox, it needs `/srv/www/html/dashboards` added explicitly, via a systemd override instead of editing the shipped unit file directly:
 
 ```
 sudo mkdir -p /etc/systemd/system/sd-report-collector.service.d
@@ -299,7 +299,7 @@ Trigger an upload from a client and check:
 ```
 sudo journalctl -u sd-report-collector.service -f
 ```
-A successful run shows "Report saved" followed by the plugin executing without an "Plugin failed" entry, and /srv/www/html/dashboards/<hostname>.html should now exist.
+A successful run shows "Report saved" followed by the plugin executing without an "Plugin failed" entry, and `/srv/www/html/dashboards/<hostname>.html` should now exist.
 
 Every time a report is processed, the plugin also updates
 `<OutputDirectory>/index.html`, an overview page listing every host it has
